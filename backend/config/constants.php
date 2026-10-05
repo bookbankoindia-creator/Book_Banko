@@ -93,27 +93,35 @@ define('SUPABASE_ANON_KEY', getEnvValue('SUPABASE_ANON_KEY', ''));
 define('SUPABASE_SERVICE_ROLE_KEY', getEnvValue('SUPABASE_SERVICE_ROLE_KEY', ''));
 
 
-// Auto-detect dynamic Base URL
-$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443)) ? "https://" : "http://";
+// Auto-detect dynamic Base URL (Supports Vercel & HTTPS Reverse Proxies)
+$isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') 
+    || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443)
+    || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+$protocol = $isHttps ? "https://" : "http://";
 $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? ''));
 
-// Normalize base URL pointing to /backend/ directory
-$pos = strpos($scriptDir, '/backend');
-if ($pos !== false) {
-    $basePath = substr($scriptDir, 0, $pos + 8);
+// Normalize base URL
+if (strpos($host, 'vercel.app') !== false) {
+    $basePath = '';
 } else {
-    $basePath = $scriptDir;
+    $pos = strpos($scriptDir, '/backend');
+    if ($pos !== false) {
+        $basePath = substr($scriptDir, 0, $pos + 8);
+    } else {
+        $basePath = $scriptDir;
+    }
 }
 $basePath = rtrim($basePath, '/');
 
-define('BASE_URL', $protocol . $host . $basePath . '/');
+define('BASE_URL', $protocol . $host . ($basePath ? $basePath : '') . '/');
 define('UPLOADS_URL', BASE_URL . 'uploads/');
 define('PDF_UPLOADS_URL', UPLOADS_URL . 'pdfs/');
 define('ICON_UPLOADS_URL', UPLOADS_URL . 'icons/');
 define('BANNER_UPLOADS_URL', UPLOADS_URL . 'banners/');
 define('PRODUCTS_UPLOADS_URL', UPLOADS_URL . 'products/');
 define('ASSETS_URL', BASE_URL . 'assets/');
+
 
 // Admin Brand Colors matching Flutter Theme
 define('COLOR_PRIMARY', '#0061A4');
