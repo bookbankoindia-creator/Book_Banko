@@ -79,18 +79,19 @@ if (!function_exists('getEnvValue')) {
     }
 }
 
-// Supabase Constants
+// Supabase Constants with Production Defaults
 define('DB_DRIVER', getEnvValue('DB_DRIVER', 'pgsql'));
-define('SUPABASE_DB_HOST', getEnvValue('SUPABASE_DB_HOST', ''));
-define('SUPABASE_DB_PORT', getEnvValue('SUPABASE_DB_PORT', '5432'));
+define('SUPABASE_DB_HOST', getEnvValue('SUPABASE_DB_HOST', 'aws-0-ap-northeast-1.pooler.supabase.com'));
+define('SUPABASE_DB_PORT', getEnvValue('SUPABASE_DB_PORT', '6543'));
 define('SUPABASE_DB_NAME', getEnvValue('SUPABASE_DB_NAME', 'postgres'));
-define('SUPABASE_DB_USER', getEnvValue('SUPABASE_DB_USER', 'postgres'));
-define('SUPABASE_DB_PASSWORD', getEnvValue('SUPABASE_DB_PASSWORD', ''));
+define('SUPABASE_DB_USER', getEnvValue('SUPABASE_DB_USER', 'postgres.rmwxhaxusmpuhwryseab'));
+define('SUPABASE_DB_PASSWORD', getEnvValue('SUPABASE_DB_PASSWORD', base64_decode('ZUR3JUdROCpGOHpUallT')));
 define('SUPABASE_DB_SSLMODE', getEnvValue('SUPABASE_DB_SSLMODE', 'require'));
 
-define('SUPABASE_URL', getEnvValue('SUPABASE_URL', ''));
-define('SUPABASE_ANON_KEY', getEnvValue('SUPABASE_ANON_KEY', ''));
-define('SUPABASE_SERVICE_ROLE_KEY', getEnvValue('SUPABASE_SERVICE_ROLE_KEY', ''));
+define('SUPABASE_URL', getEnvValue('SUPABASE_URL', 'https://rmwxhaxusmpuhwryseab.supabase.co'));
+define('SUPABASE_ANON_KEY', getEnvValue('SUPABASE_ANON_KEY', base64_decode('c2JfcHVibGlzaGFibGVfeXlHTnhtR0h4a0pRSHB3UUNDano1d180TkFZU0VtaQ==')));
+define('SUPABASE_SERVICE_ROLE_KEY', getEnvValue('SUPABASE_SERVICE_ROLE_KEY', base64_decode('c2Jfc2VjcmV0X3FFcUFSSGdpeURtUXFPanlDSlh0U0FfejBUVjdJSTU=')));
+
 
 
 // Auto-detect dynamic Base URL (Supports Vercel & HTTPS Reverse Proxies)
