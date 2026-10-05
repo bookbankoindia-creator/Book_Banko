@@ -62,18 +62,36 @@ if (file_exists($envFile)) {
     }
 }
 
-// Supabase Constants
-define('DB_DRIVER', getenv('DB_DRIVER') ?: ($_ENV['DB_DRIVER'] ?? 'pgsql'));
-define('SUPABASE_DB_HOST', getenv('SUPABASE_DB_HOST') ?: ($_ENV['SUPABASE_DB_HOST'] ?? ''));
-define('SUPABASE_DB_PORT', getenv('SUPABASE_DB_PORT') ?: ($_ENV['SUPABASE_DB_PORT'] ?? '5432'));
-define('SUPABASE_DB_NAME', getenv('SUPABASE_DB_NAME') ?: ($_ENV['SUPABASE_DB_NAME'] ?? 'postgres'));
-define('SUPABASE_DB_USER', getenv('SUPABASE_DB_USER') ?: ($_ENV['SUPABASE_DB_USER'] ?? 'postgres'));
-define('SUPABASE_DB_PASSWORD', getenv('SUPABASE_DB_PASSWORD') ?: ($_ENV['SUPABASE_DB_PASSWORD'] ?? ''));
-define('SUPABASE_DB_SSLMODE', getenv('SUPABASE_DB_SSLMODE') ?: ($_ENV['SUPABASE_DB_SSLMODE'] ?? 'require'));
+// Helper to retrieve environment variables from getenv, $_ENV, or $_SERVER (for Vercel serverless)
+if (!function_exists('getEnvValue')) {
+    function getEnvValue(string $key, string $default = ''): string {
+        $val = getenv($key);
+        if ($val !== false && $val !== '') {
+            return (string)$val;
+        }
+        if (isset($_ENV[$key]) && $_ENV[$key] !== '') {
+            return (string)$_ENV[$key];
+        }
+        if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') {
+            return (string)$_SERVER[$key];
+        }
+        return $default;
+    }
+}
 
-define('SUPABASE_URL', getenv('SUPABASE_URL') ?: ($_ENV['SUPABASE_URL'] ?? ''));
-define('SUPABASE_ANON_KEY', getenv('SUPABASE_ANON_KEY') ?: ($_ENV['SUPABASE_ANON_KEY'] ?? ''));
-define('SUPABASE_SERVICE_ROLE_KEY', getenv('SUPABASE_SERVICE_ROLE_KEY') ?: ($_ENV['SUPABASE_SERVICE_ROLE_KEY'] ?? ''));
+// Supabase Constants
+define('DB_DRIVER', getEnvValue('DB_DRIVER', 'pgsql'));
+define('SUPABASE_DB_HOST', getEnvValue('SUPABASE_DB_HOST', ''));
+define('SUPABASE_DB_PORT', getEnvValue('SUPABASE_DB_PORT', '5432'));
+define('SUPABASE_DB_NAME', getEnvValue('SUPABASE_DB_NAME', 'postgres'));
+define('SUPABASE_DB_USER', getEnvValue('SUPABASE_DB_USER', 'postgres'));
+define('SUPABASE_DB_PASSWORD', getEnvValue('SUPABASE_DB_PASSWORD', ''));
+define('SUPABASE_DB_SSLMODE', getEnvValue('SUPABASE_DB_SSLMODE', 'require'));
+
+define('SUPABASE_URL', getEnvValue('SUPABASE_URL', ''));
+define('SUPABASE_ANON_KEY', getEnvValue('SUPABASE_ANON_KEY', ''));
+define('SUPABASE_SERVICE_ROLE_KEY', getEnvValue('SUPABASE_SERVICE_ROLE_KEY', ''));
+
 
 // Auto-detect dynamic Base URL
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443)) ? "https://" : "http://";
