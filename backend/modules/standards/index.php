@@ -56,8 +56,8 @@ include __DIR__ . '/../../includes/header.php';
 
 <!-- Filter Bar -->
 <div class="bb-card mb-4 p-3">
-    <form method="GET" action="" class="row g-2 align-items-center">
-        <div class="col-md-4">
+    <form method="GET" action="" class="row g-3 align-items-end">
+        <div class="col-12 col-sm-6 col-md-4">
             <label class="form-label small text-muted mb-1">Filter by Board</label>
             <select class="form-select form-select-sm" name="board_id" onchange="this.form.submit()">
                 <option value="">All Educational Boards</option>
@@ -69,7 +69,7 @@ include __DIR__ . '/../../includes/header.php';
             </select>
         </div>
 
-        <div class="col-md-4">
+        <div class="col-12 col-sm-6 col-md-4">
             <label class="form-label small text-muted mb-1">Filter by Medium</label>
             <select class="form-select form-select-sm" name="medium_id" onchange="this.form.submit()">
                 <option value="">All Mediums</option>
@@ -81,23 +81,26 @@ include __DIR__ . '/../../includes/header.php';
             </select>
         </div>
 
-        <div class="col-md-4 d-flex align-items-end gap-2 pt-3">
-            <button type="submit" class="btn btn-sm btn-bb-primary flex-grow-1"><i class="bi bi-funnel me-1"></i>Filter</button>
-            <a href="<?= url('modules/standards/index.php') ?>" class="btn btn-sm btn-light border">Reset</a>
+        <div class="col-12 col-md-4">
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-sm btn-bb-primary flex-grow-1"><i class="bi bi-funnel me-1"></i>Filter</button>
+                <a href="<?= url('modules/standards/index.php') ?>" class="btn btn-sm btn-light border px-3">Reset</a>
+            </div>
         </div>
     </form>
 </div>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <h5 class="fw-bold mb-0 text-dark">Academic Standards (<?= count($standards) ?>)</h5>
-    <a href="<?= url('modules/standards/add.php') ?>" class="btn btn-bb-primary btn-sm">
-        <i class="bi bi-plus-lg me-1"></i>Add Standard
+    <a href="<?= url('modules/standards/add.php') ?>" class="btn btn-bb-primary btn-sm d-inline-flex align-items-center gap-2">
+        <i class="bi bi-plus-lg"></i>
+        <span>Add Standard</span>
     </a>
 </div>
 
-<div class="bb-card">
+<div class="bb-card p-3 p-md-4">
     <div class="table-responsive">
-        <table class="table bb-table data-table align-middle">
+        <table class="table bb-table data-table align-middle w-100">
             <thead>
                 <tr>
                     <th width="50">Order</th>

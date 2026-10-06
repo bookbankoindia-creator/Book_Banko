@@ -19,6 +19,9 @@ function isActiveNav(string $keyword): string {
             <h5>Book Banko</h5>
             <span>Admin Portal</span>
         </div>
+        <button type="button" class="btn btn-sm text-white d-lg-none p-1 ms-auto" id="sidebarCloseBtn" aria-label="Close sidebar">
+            <i class="bi bi-x-lg fs-5"></i>
+        </button>
     </div>
 
     <!-- Navigation Links -->

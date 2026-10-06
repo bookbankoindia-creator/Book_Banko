@@ -39,6 +39,7 @@ $currentAdmin = currentAdmin();
 <div class="app-wrapper">
     <!-- Sidebar Include -->
     <?php include __DIR__ . '/sidebar.php'; ?>
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
     <div class="main-content">
         <!-- Top Navbar Include -->

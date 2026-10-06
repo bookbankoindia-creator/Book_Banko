@@ -26,16 +26,17 @@ $mediums = $stmt->fetchAll();
 include __DIR__ . '/../../includes/header.php';
 ?>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <h5 class="fw-bold mb-0 text-dark">All Mediums of Study (<?= count($mediums) ?>)</h5>
-    <a href="<?= url('modules/mediums/add.php') ?>" class="btn btn-bb-primary btn-sm">
-        <i class="bi bi-plus-lg me-1"></i>Add New Medium
+    <a href="<?= url('modules/mediums/add.php') ?>" class="btn btn-bb-primary btn-sm d-inline-flex align-items-center gap-2">
+        <i class="bi bi-plus-lg"></i>
+        <span>Add New Medium</span>
     </a>
 </div>
 
-<div class="bb-card">
+<div class="bb-card p-3 p-md-4">
     <div class="table-responsive">
-        <table class="table bb-table data-table align-middle">
+        <table class="table bb-table data-table align-middle w-100">
             <thead>
                 <tr>
                     <th width="60">Order</th>

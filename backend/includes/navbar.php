@@ -25,6 +25,7 @@
                         || (strpos($currentUri, '/modules/mediums/') !== false)
                         || (strpos($currentUri, '/modules/standards/') !== false)
                         || (strpos($currentUri, '/modules/streams/') !== false)
+                        || (strpos($currentUri, '/modules/chapters/') !== false)
                         || (!empty($hideUploadPdf));
         if (!$isHierarchyPage): 
         ?>

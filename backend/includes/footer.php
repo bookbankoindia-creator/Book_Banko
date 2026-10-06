@@ -25,21 +25,24 @@
 
 <script>
 $(document).ready(function() {
-    // Initialize DataTables
+    // Initialize DataTables with responsive options
     if ($('.data-table').length > 0) {
         $('.data-table').DataTable({
             responsive: true,
+            autoWidth: false,
             pageLength: 10,
             language: {
-                search: "_INPUT_",
-                searchPlaceholder: "Search records..."
+                search: "",
+                searchPlaceholder: "Search records...",
+                lengthMenu: "Show _MENU_ entries"
             }
         });
     }
 
-    // Sidebar Mobile Toggle
-    $('#sidebarToggle').on('click', function() {
+    // Sidebar Mobile Toggle & Backdrop handling
+    $('#sidebarToggle, #sidebarCloseBtn, #sidebarBackdrop').on('click', function() {
         $('#appSidebar').toggleClass('show');
+        $('#sidebarBackdrop').toggleClass('show');
     });
 
     // Auto dismiss flash alerts after 5 seconds
