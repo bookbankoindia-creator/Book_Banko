@@ -17,8 +17,7 @@ class ApiService {
   static String get baseUrl {
     if (AppConfig.customApiUrl.isNotEmpty) return AppConfig.customApiUrl;
     if (_activeBaseUrl.isNotEmpty) return _activeBaseUrl;
-    if (kIsWeb) return 'http://localhost/Book_Banko/backend/api';
-    return _candidateBaseUrls.first;
+    return 'https://bookbanko.vercel.app/api';
   }
 
   // Helper to make HTTP GET requests across candidate URLs with fast fallback

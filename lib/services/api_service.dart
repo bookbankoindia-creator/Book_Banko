@@ -9,13 +9,7 @@ class ApiService {
     if (AppConfig.customApiUrl.isNotEmpty) {
       return AppConfig.customApiUrl;
     }
-    if (kIsWeb) {
-      return 'http://localhost/Book_Banko/backend/api';
-    } else if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://192.168.0.102/Book_Banko/backend/api';
-    } else {
-      return 'http://localhost/Book_Banko/backend/api';
-    }
+    return 'https://bookbanko.vercel.app/api';
   }
 
   // 1. Fetch All Active Boards

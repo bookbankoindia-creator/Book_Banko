@@ -126,29 +126,21 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
       return rawUrl;
     }
 
-    // If running on a physical Android device or emulator, replace localhost with active backend host
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      final activeBase = ApiService.baseUrl;
-      final backendRoot = activeBase.replaceAll('/api', '');
+    final activeBase = ApiService.baseUrl;
+    final backendRoot = activeBase.replaceAll('/api', '');
 
-      if (rawUrl.contains('localhost/Book_Banko/backend')) {
-        return rawUrl.replaceAll(
-          'http://localhost/Book_Banko/backend',
-          backendRoot,
-        );
-      }
-      if (rawUrl.contains('10.0.2.2/Book_Banko/backend')) {
-        return rawUrl.replaceAll(
-          'http://10.0.2.2/Book_Banko/backend',
-          backendRoot,
-        );
-      }
-      if (rawUrl.contains('127.0.0.1/Book_Banko/backend')) {
-        return rawUrl.replaceAll(
-          'http://127.0.0.1/Book_Banko/backend',
-          backendRoot,
-        );
-      }
+    // Replace any local backend URLs with the active production backend root
+    if (rawUrl.contains('localhost/Book_Banko/backend')) {
+      return rawUrl.replaceAll('http://localhost/Book_Banko/backend', backendRoot);
+    }
+    if (rawUrl.contains('192.168.0.102/Book_Banko/backend')) {
+      return rawUrl.replaceAll('http://192.168.0.102/Book_Banko/backend', backendRoot);
+    }
+    if (rawUrl.contains('10.0.2.2/Book_Banko/backend')) {
+      return rawUrl.replaceAll('http://10.0.2.2/Book_Banko/backend', backendRoot);
+    }
+    if (rawUrl.contains('127.0.0.1/Book_Banko/backend')) {
+      return rawUrl.replaceAll('http://127.0.0.1/Book_Banko/backend', backendRoot);
     }
     return rawUrl;
   }

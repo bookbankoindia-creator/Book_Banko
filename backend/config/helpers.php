@@ -173,12 +173,7 @@ function resolveMediaUrl(?string $fileName, string $bucketType = 'pdfs'): string
         return $supabase->getStoragePublicUrl($bucketType, $fileName);
     }
 
-    $host = $_SERVER['HTTP_HOST'] ?? '192.168.0.102';
-    if ($host === 'localhost' || $host === '127.0.0.1') {
-        $host = '192.168.0.102';
-    }
-    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
-    return "{$protocol}{$host}/Book_Banko/backend/uploads/{$bucketType}/" . rawurlencode($fileName);
+    return UPLOADS_URL . "{$bucketType}/" . rawurlencode($fileName);
 }
 
 // URL Helper

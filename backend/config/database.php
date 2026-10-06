@@ -1,3 +1,4 @@
+
 <?php
 /**
  * Database Configuration & Connection (PDO)
@@ -31,7 +32,7 @@ class Database {
 
             try {
                 if ($driver === 'pgsql') {
-                    // Supabase PostgreSQL Connection Settings with Fallback Defaults (Mumbai)
+                    // Supabase PostgreSQL Connection Settings with Fallback Defaults
                     $host = (defined('SUPABASE_DB_HOST') && !empty(SUPABASE_DB_HOST)) ? SUPABASE_DB_HOST : 'aws-0-ap-south-1.pooler.supabase.com';
                     $port = (defined('SUPABASE_DB_PORT') && !empty(SUPABASE_DB_PORT)) ? SUPABASE_DB_PORT : '6543';
                     $dbname = (defined('SUPABASE_DB_NAME') && !empty(SUPABASE_DB_NAME)) ? SUPABASE_DB_NAME : 'postgres';

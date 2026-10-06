@@ -9,7 +9,7 @@ $files = [
 ];
 
 foreach ($files as $f) {
-    $url = "https://rmwxhaxusmpuhwryseab.supabase.co/storage/v1/object/public/pdfs/" . $f;
+    $url = "https://hdvcmoyqdpurjsmpbkjt.supabase.co/storage/v1/object/public/pdfs/" . $f;
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_NOBODY, true);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);

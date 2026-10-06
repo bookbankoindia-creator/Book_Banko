@@ -2,26 +2,26 @@ class AppConfig {
   // Production / Deployed Backend API Endpoint
   static const String customApiUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: '',
+    defaultValue: 'https://bookbanko.vercel.app/api',
   );
 
-  // Supabase Project REST & Storage URL
+  // Supabase Project REST & Storage URL (Mumbai ap-south-1)
   static const String supabaseUrl = String.fromEnvironment(
     'SUPABASE_URL',
-    defaultValue: 'https://rmwxhaxusmpuhwryseab.supabase.co',
+    defaultValue: 'https://hdvcmoyqdpurjsmpbkjt.supabase.co',
   );
 
   static const String supabaseAnonKey = String.fromEnvironment(
     'SUPABASE_ANON_KEY',
-    defaultValue: 'sb_publishable_yyGNxmGHxkJQHpwQCCjz5w_4NAYSEmi',
+    defaultValue: 'sb_publishable_E3FlFjqTNGpFBTsVDOW8dQ_W_UazdWY',
   );
 
-  // Default candidate host endpoints for development
+  // Default candidate host endpoints (Live Production First)
   static const List<String> defaultCandidateUrls = [
-    'http://192.168.0.102/Book_Banko/backend/api',
-    'http://localhost/Book_Banko/backend/api',
+    'https://bookbanko.vercel.app/api',
+    'https://bookbanko-neon.vercel.app/api',
     'http://10.0.2.2/Book_Banko/backend/api',
+    'http://localhost/Book_Banko/backend/api',
     'http://127.0.0.1/Book_Banko/backend/api',
-    'http://192.168.0.103/Book_Banko/backend/api',
   ];
 }
