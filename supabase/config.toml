@@ -1,5 +1,5 @@
-# Supabase Project Configuration for Book Banko
-project_id = "rmwxhaxusmpuhwryseab"
+# Supabase Project Configuration for Book Banko (Mumbai Region)
+project_id = "hdvcmoyqdpurjsmpbkjt"
 
 [api]
 enabled = true
