@@ -46,7 +46,7 @@ try {
     $exams = $stmt->fetchAll();
 
     foreach ($exams as &$item) {
-        $item['material_count'] = (int)$item['material_count'];
+        $item['material_count'] = (int)($item['material_count'] ?? 0);
         if (!empty($item['banner_image'])) {
             $item['full_banner_url'] = resolveMediaUrl($item['banner_image'], 'banners');
         }

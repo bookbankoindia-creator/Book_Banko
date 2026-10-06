@@ -48,9 +48,9 @@ try {
 
     // Attach full PDF URL and parse types
     foreach ($materials as &$item) {
-        $item['page_count'] = (int)$item['page_count'];
-        $item['file_size_mb'] = (float)$item['file_size_mb'];
-        $item['is_free'] = (bool)$item['is_free'];
+        $item['page_count'] = (int)($item['page_count'] ?? 0);
+        $item['file_size_mb'] = (float)($item['file_size_mb'] ?? 0.0);
+        $item['is_free'] = (bool)($item['is_free'] ?? true);
 
         if (!empty($item['pdf_file_path'])) {
             $item['full_pdf_url'] = resolveMediaUrl($item['pdf_file_path'], 'pdfs');

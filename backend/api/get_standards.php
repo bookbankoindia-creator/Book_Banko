@@ -77,8 +77,8 @@ try {
 
     // Cast boolean and integer
     foreach ($standards as &$std) {
-        $std['requires_stream'] = (bool)$std['requires_stream'];
-        $std['standard_number'] = (int)$std['standard_number'];
+        $std['requires_stream'] = (bool)($std['requires_stream'] ?? false);
+        $std['standard_number'] = (int)($std['standard_number'] ?? 0);
     }
 
     jsonResponse('success', 'Standards fetched successfully', $standards);
