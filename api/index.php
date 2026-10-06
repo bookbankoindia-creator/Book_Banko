@@ -3,6 +3,7 @@
  * Unified Vercel Serverless Entrypoint & Router
  * Book Banko Backend & Admin Panel
  */
+ob_start();
 
 $requestUri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 $requestUri = rawurldecode($requestUri);
