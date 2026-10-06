@@ -30,6 +30,7 @@ class Database {
             ];
 
             try {
+                if ($driver === 'pgsql') {
                     // Supabase PostgreSQL Connection Settings with Fallback Defaults
                     $host = (defined('SUPABASE_DB_HOST') && !empty(SUPABASE_DB_HOST)) ? SUPABASE_DB_HOST : 'aws-0-ap-northeast-1.pooler.supabase.com';
                     $port = (defined('SUPABASE_DB_PORT') && !empty(SUPABASE_DB_PORT)) ? SUPABASE_DB_PORT : '6543';
@@ -40,7 +41,6 @@ class Database {
 
                     $dsn = "pgsql:host={$host};port={$port};dbname={$dbname};sslmode={$sslmode}";
                     self::$instance = new PDO($dsn, $user, $pass, $options);
-
                 } else {
                     // MySQL DSN
                     $dsn = "mysql:host=" . MYSQL_HOST . ";port=" . MYSQL_PORT . ";dbname=" . MYSQL_NAME . ";charset=utf8mb4";

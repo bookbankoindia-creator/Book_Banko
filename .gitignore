@@ -57,7 +57,9 @@ backend/.env
 banko.zip
 60
 upload_to_github.bat
+deploy_vercel.bat
 backend/uploads/pdfs/
+
 Book_Banko/
 
 
