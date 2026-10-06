@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS admins (
 );
 
 DROP TRIGGER IF EXISTS trg_admins_updated_at ON admins;
+DROP TRIGGER IF EXISTS trg_admins_updated_at ON admins;
 CREATE TRIGGER trg_admins_updated_at BEFORE UPDATE ON admins
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -55,6 +56,7 @@ CREATE TABLE IF NOT EXISTS boards (
 );
 
 DROP TRIGGER IF EXISTS trg_boards_updated_at ON boards;
+DROP TRIGGER IF EXISTS trg_boards_updated_at ON boards;
 CREATE TRIGGER trg_boards_updated_at BEFORE UPDATE ON boards
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -73,6 +75,7 @@ CREATE TABLE IF NOT EXISTS mediums (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS trg_mediums_updated_at ON mediums;
 DROP TRIGGER IF EXISTS trg_mediums_updated_at ON mediums;
 CREATE TRIGGER trg_mediums_updated_at BEFORE UPDATE ON mediums
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -96,6 +99,7 @@ CREATE TABLE IF NOT EXISTS standards (
 CREATE INDEX IF NOT EXISTS idx_standards_board_medium ON standards(board_id, medium_id, standard_number);
 
 DROP TRIGGER IF EXISTS trg_standards_updated_at ON standards;
+DROP TRIGGER IF EXISTS trg_standards_updated_at ON standards;
 CREATE TRIGGER trg_standards_updated_at BEFORE UPDATE ON standards
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -118,6 +122,7 @@ CREATE TABLE IF NOT EXISTS streams (
 );
 
 DROP TRIGGER IF EXISTS trg_streams_updated_at ON streams;
+DROP TRIGGER IF EXISTS trg_streams_updated_at ON streams;
 CREATE TRIGGER trg_streams_updated_at BEFORE UPDATE ON streams
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -136,6 +141,7 @@ CREATE TABLE IF NOT EXISTS learning_categories (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS trg_learning_categories_updated_at ON learning_categories;
 DROP TRIGGER IF EXISTS trg_learning_categories_updated_at ON learning_categories;
 CREATE TRIGGER trg_learning_categories_updated_at BEFORE UPDATE ON learning_categories
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -156,6 +162,7 @@ CREATE TABLE IF NOT EXISTS dashboard_modules (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS trg_dashboard_modules_updated_at ON dashboard_modules;
 DROP TRIGGER IF EXISTS trg_dashboard_modules_updated_at ON dashboard_modules;
 CREATE TRIGGER trg_dashboard_modules_updated_at BEFORE UPDATE ON dashboard_modules
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -181,6 +188,7 @@ CREATE TABLE IF NOT EXISTS subjects (
 
 CREATE INDEX IF NOT EXISTS idx_subjects_lookup ON subjects(board_id, medium_id, standard_id, stream_id, status);
 
+DROP TRIGGER IF EXISTS trg_subjects_updated_at ON subjects;
 DROP TRIGGER IF EXISTS trg_subjects_updated_at ON subjects;
 CREATE TRIGGER trg_subjects_updated_at BEFORE UPDATE ON subjects
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -210,6 +218,7 @@ CREATE TABLE IF NOT EXISTS chapters_content (
 CREATE INDEX IF NOT EXISTS idx_chapters_subject_module ON chapters_content(subject_id, module_id, status);
 
 DROP TRIGGER IF EXISTS trg_chapters_content_updated_at ON chapters_content;
+DROP TRIGGER IF EXISTS trg_chapters_content_updated_at ON chapters_content;
 CREATE TRIGGER trg_chapters_content_updated_at BEFORE UPDATE ON chapters_content
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -230,6 +239,7 @@ CREATE TABLE IF NOT EXISTS banners (
 );
 
 DROP TRIGGER IF EXISTS trg_banners_updated_at ON banners;
+DROP TRIGGER IF EXISTS trg_banners_updated_at ON banners;
 CREATE TRIGGER trg_banners_updated_at BEFORE UPDATE ON banners
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -244,6 +254,7 @@ CREATE TABLE IF NOT EXISTS app_settings (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS trg_app_settings_updated_at ON app_settings;
 DROP TRIGGER IF EXISTS trg_app_settings_updated_at ON app_settings;
 CREATE TRIGGER trg_app_settings_updated_at BEFORE UPDATE ON app_settings
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -277,6 +288,7 @@ CREATE TABLE IF NOT EXISTS extra_materials (
 CREATE INDEX IF NOT EXISTS idx_extra_materials_filter ON extra_materials(category_slug, board_id, medium_id, standard_id, status);
 
 DROP TRIGGER IF EXISTS trg_extra_materials_updated_at ON extra_materials;
+DROP TRIGGER IF EXISTS trg_extra_materials_updated_at ON extra_materials;
 CREATE TRIGGER trg_extra_materials_updated_at BEFORE UPDATE ON extra_materials
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -301,6 +313,7 @@ CREATE TABLE IF NOT EXISTS study_products (
 CREATE INDEX IF NOT EXISTS idx_study_products_status ON study_products(status, display_order);
 
 DROP TRIGGER IF EXISTS trg_study_products_updated_at ON study_products;
+DROP TRIGGER IF EXISTS trg_study_products_updated_at ON study_products;
 CREATE TRIGGER trg_study_products_updated_at BEFORE UPDATE ON study_products
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -323,6 +336,7 @@ CREATE TABLE IF NOT EXISTS competitive_exams (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+DROP TRIGGER IF EXISTS trg_competitive_exams_updated_at ON competitive_exams;
 DROP TRIGGER IF EXISTS trg_competitive_exams_updated_at ON competitive_exams;
 CREATE TRIGGER trg_competitive_exams_updated_at BEFORE UPDATE ON competitive_exams
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -354,6 +368,7 @@ CREATE TABLE IF NOT EXISTS competitive_exam_materials (
 CREATE INDEX IF NOT EXISTS idx_comp_materials_exam ON competitive_exam_materials(exam_id, status);
 
 DROP TRIGGER IF EXISTS trg_competitive_exam_materials_updated_at ON competitive_exam_materials;
+DROP TRIGGER IF EXISTS trg_competitive_exam_materials_updated_at ON competitive_exam_materials;
 CREATE TRIGGER trg_competitive_exam_materials_updated_at BEFORE UPDATE ON competitive_exam_materials
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -382,6 +397,7 @@ CREATE TABLE IF NOT EXISTS higher_education_materials (
 CREATE INDEX IF NOT EXISTS idx_higher_ed_status ON higher_education_materials(course_name, status);
 
 DROP TRIGGER IF EXISTS trg_higher_education_materials_updated_at ON higher_education_materials;
+DROP TRIGGER IF EXISTS trg_higher_education_materials_updated_at ON higher_education_materials;
 CREATE TRIGGER trg_higher_education_materials_updated_at BEFORE UPDATE ON higher_education_materials
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -409,67 +425,98 @@ ALTER TABLE higher_education_materials ENABLE ROW LEVEL SECURITY;
 
 -- Public Read Policies (Allow Anon & Authenticated users to view active content)
 DROP POLICY IF EXISTS "Public can view active boards" ON boards;
+DROP POLICY IF EXISTS "Public can view active boards" ON boards;
 CREATE POLICY "Public can view active boards" ON boards FOR SELECT USING (status = 'active');
+DROP POLICY IF EXISTS "Public can view active mediums" ON mediums;
 DROP POLICY IF EXISTS "Public can view active mediums" ON mediums;
 CREATE POLICY "Public can view active mediums" ON mediums FOR SELECT USING (status = 'active');
 DROP POLICY IF EXISTS "Public can view active standards" ON standards;
+DROP POLICY IF EXISTS "Public can view active standards" ON standards;
 CREATE POLICY "Public can view active standards" ON standards FOR SELECT USING (status = 'active');
+DROP POLICY IF EXISTS "Public can view active streams" ON streams;
 DROP POLICY IF EXISTS "Public can view active streams" ON streams;
 CREATE POLICY "Public can view active streams" ON streams FOR SELECT USING (status = 'active');
 DROP POLICY IF EXISTS "Public can view active categories" ON learning_categories;
+DROP POLICY IF EXISTS "Public can view active categories" ON learning_categories;
 CREATE POLICY "Public can view active categories" ON learning_categories FOR SELECT USING (status = 'active');
+DROP POLICY IF EXISTS "Public can view active modules" ON dashboard_modules;
 DROP POLICY IF EXISTS "Public can view active modules" ON dashboard_modules;
 CREATE POLICY "Public can view active modules" ON dashboard_modules FOR SELECT USING (status = 'active');
 DROP POLICY IF EXISTS "Public can view active subjects" ON subjects;
+DROP POLICY IF EXISTS "Public can view active subjects" ON subjects;
 CREATE POLICY "Public can view active subjects" ON subjects FOR SELECT USING (status = 'active');
+DROP POLICY IF EXISTS "Public can view active chapters" ON chapters_content;
 DROP POLICY IF EXISTS "Public can view active chapters" ON chapters_content;
 CREATE POLICY "Public can view active chapters" ON chapters_content FOR SELECT USING (status = 'active');
 DROP POLICY IF EXISTS "Public can view active banners" ON banners;
+DROP POLICY IF EXISTS "Public can view active banners" ON banners;
 CREATE POLICY "Public can view active banners" ON banners FOR SELECT USING (status = 'active');
+DROP POLICY IF EXISTS "Public can view app settings" ON app_settings;
 DROP POLICY IF EXISTS "Public can view app settings" ON app_settings;
 CREATE POLICY "Public can view app settings" ON app_settings FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Public can view active extra materials" ON extra_materials;
+DROP POLICY IF EXISTS "Public can view active extra materials" ON extra_materials;
 CREATE POLICY "Public can view active extra materials" ON extra_materials FOR SELECT USING (status = 'active');
+DROP POLICY IF EXISTS "Public can view active study products" ON study_products;
 DROP POLICY IF EXISTS "Public can view active study products" ON study_products;
 CREATE POLICY "Public can view active study products" ON study_products FOR SELECT USING (status = 'active');
 DROP POLICY IF EXISTS "Public can view active competitive exams" ON competitive_exams;
+DROP POLICY IF EXISTS "Public can view active competitive exams" ON competitive_exams;
 CREATE POLICY "Public can view active competitive exams" ON competitive_exams FOR SELECT USING (status = 'active');
 DROP POLICY IF EXISTS "Public can view active exam materials" ON competitive_exam_materials;
+DROP POLICY IF EXISTS "Public can view active exam materials" ON competitive_exam_materials;
 CREATE POLICY "Public can view active exam materials" ON competitive_exam_materials FOR SELECT USING (status = 'active');
+DROP POLICY IF EXISTS "Public can view active higher ed materials" ON higher_education_materials;
 DROP POLICY IF EXISTS "Public can view active higher ed materials" ON higher_education_materials;
 CREATE POLICY "Public can view active higher ed materials" ON higher_education_materials FOR SELECT USING (status = 'active');
 
 -- Service Role / Admin Full Access Policies (Full CRUD for Backend / Admin Panel)
 DROP POLICY IF EXISTS "Service role full access on admins" ON admins;
+DROP POLICY IF EXISTS "Service role full access on admins" ON admins;
 CREATE POLICY "Service role full access on admins" ON admins FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Service role full access on boards" ON boards;
 DROP POLICY IF EXISTS "Service role full access on boards" ON boards;
 CREATE POLICY "Service role full access on boards" ON boards FOR ALL USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "Service role full access on mediums" ON mediums;
+DROP POLICY IF EXISTS "Service role full access on mediums" ON mediums;
 CREATE POLICY "Service role full access on mediums" ON mediums FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Service role full access on standards" ON standards;
 DROP POLICY IF EXISTS "Service role full access on standards" ON standards;
 CREATE POLICY "Service role full access on standards" ON standards FOR ALL USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "Service role full access on streams" ON streams;
+DROP POLICY IF EXISTS "Service role full access on streams" ON streams;
 CREATE POLICY "Service role full access on streams" ON streams FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Service role full access on categories" ON learning_categories;
 DROP POLICY IF EXISTS "Service role full access on categories" ON learning_categories;
 CREATE POLICY "Service role full access on categories" ON learning_categories FOR ALL USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "Service role full access on modules" ON dashboard_modules;
+DROP POLICY IF EXISTS "Service role full access on modules" ON dashboard_modules;
 CREATE POLICY "Service role full access on modules" ON dashboard_modules FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Service role full access on subjects" ON subjects;
 DROP POLICY IF EXISTS "Service role full access on subjects" ON subjects;
 CREATE POLICY "Service role full access on subjects" ON subjects FOR ALL USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "Service role full access on chapters" ON chapters_content;
+DROP POLICY IF EXISTS "Service role full access on chapters" ON chapters_content;
 CREATE POLICY "Service role full access on chapters" ON chapters_content FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Service role full access on banners" ON banners;
 DROP POLICY IF EXISTS "Service role full access on banners" ON banners;
 CREATE POLICY "Service role full access on banners" ON banners FOR ALL USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "Service role full access on app_settings" ON app_settings;
+DROP POLICY IF EXISTS "Service role full access on app_settings" ON app_settings;
 CREATE POLICY "Service role full access on app_settings" ON app_settings FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Service role full access on extra_materials" ON extra_materials;
 DROP POLICY IF EXISTS "Service role full access on extra_materials" ON extra_materials;
 CREATE POLICY "Service role full access on extra_materials" ON extra_materials FOR ALL USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "Service role full access on study_products" ON study_products;
+DROP POLICY IF EXISTS "Service role full access on study_products" ON study_products;
 CREATE POLICY "Service role full access on study_products" ON study_products FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Service role full access on competitive_exams" ON competitive_exams;
 DROP POLICY IF EXISTS "Service role full access on competitive_exams" ON competitive_exams;
 CREATE POLICY "Service role full access on competitive_exams" ON competitive_exams FOR ALL USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "Service role full access on exam_materials" ON competitive_exam_materials;
+DROP POLICY IF EXISTS "Service role full access on exam_materials" ON competitive_exam_materials;
 CREATE POLICY "Service role full access on exam_materials" ON competitive_exam_materials FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Service role full access on higher_ed_materials" ON higher_education_materials;
 DROP POLICY IF EXISTS "Service role full access on higher_ed_materials" ON higher_education_materials;
 CREATE POLICY "Service role full access on higher_ed_materials" ON higher_education_materials FOR ALL USING (true) WITH CHECK (true);
 
@@ -489,20 +536,28 @@ ON CONFLICT (id) DO UPDATE SET
 
 -- Storage Policies
 DROP POLICY IF EXISTS "Public Read on Storage PDFs" ON storage.objects;
+DROP POLICY IF EXISTS "Public Read on Storage PDFs" ON storage.objects;
 CREATE POLICY "Public Read on Storage PDFs" ON storage.objects FOR SELECT USING (bucket_id = 'pdfs');
+DROP POLICY IF EXISTS "Public Read on Storage Banners" ON storage.objects;
 DROP POLICY IF EXISTS "Public Read on Storage Banners" ON storage.objects;
 CREATE POLICY "Public Read on Storage Banners" ON storage.objects FOR SELECT USING (bucket_id = 'banners');
 DROP POLICY IF EXISTS "Public Read on Storage Icons" ON storage.objects;
+DROP POLICY IF EXISTS "Public Read on Storage Icons" ON storage.objects;
 CREATE POLICY "Public Read on Storage Icons" ON storage.objects FOR SELECT USING (bucket_id = 'icons');
+DROP POLICY IF EXISTS "Public Read on Storage Products" ON storage.objects;
 DROP POLICY IF EXISTS "Public Read on Storage Products" ON storage.objects;
 CREATE POLICY "Public Read on Storage Products" ON storage.objects FOR SELECT USING (bucket_id = 'products');
 
 DROP POLICY IF EXISTS "Service Role Upload on PDFs" ON storage.objects;
+DROP POLICY IF EXISTS "Service Role Upload on PDFs" ON storage.objects;
 CREATE POLICY "Service Role Upload on PDFs" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'pdfs');
+DROP POLICY IF EXISTS "Service Role Upload on Banners" ON storage.objects;
 DROP POLICY IF EXISTS "Service Role Upload on Banners" ON storage.objects;
 CREATE POLICY "Service Role Upload on Banners" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'banners');
 DROP POLICY IF EXISTS "Service Role Upload on Icons" ON storage.objects;
+DROP POLICY IF EXISTS "Service Role Upload on Icons" ON storage.objects;
 CREATE POLICY "Service Role Upload on Icons" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'icons');
+DROP POLICY IF EXISTS "Service Role Upload on Products" ON storage.objects;
 DROP POLICY IF EXISTS "Service Role Upload on Products" ON storage.objects;
 CREATE POLICY "Service Role Upload on Products" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'products');
 

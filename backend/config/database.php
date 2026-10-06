@@ -31,12 +31,12 @@ class Database {
 
             try {
                 if ($driver === 'pgsql') {
-                    // Supabase PostgreSQL Connection Settings with Fallback Defaults
-                    $host = (defined('SUPABASE_DB_HOST') && !empty(SUPABASE_DB_HOST)) ? SUPABASE_DB_HOST : 'aws-0-ap-northeast-1.pooler.supabase.com';
+                    // Supabase PostgreSQL Connection Settings with Fallback Defaults (Mumbai)
+                    $host = (defined('SUPABASE_DB_HOST') && !empty(SUPABASE_DB_HOST)) ? SUPABASE_DB_HOST : 'aws-0-ap-south-1.pooler.supabase.com';
                     $port = (defined('SUPABASE_DB_PORT') && !empty(SUPABASE_DB_PORT)) ? SUPABASE_DB_PORT : '6543';
                     $dbname = (defined('SUPABASE_DB_NAME') && !empty(SUPABASE_DB_NAME)) ? SUPABASE_DB_NAME : 'postgres';
-                    $user = (defined('SUPABASE_DB_USER') && !empty(SUPABASE_DB_USER)) ? SUPABASE_DB_USER : 'postgres.rmwxhaxusmpuhwryseab';
-                    $pass = (defined('SUPABASE_DB_PASSWORD') && !empty(SUPABASE_DB_PASSWORD)) ? SUPABASE_DB_PASSWORD : base64_decode('ZUR3JUdROCpGOHpUallT');
+                    $user = (defined('SUPABASE_DB_USER') && !empty(SUPABASE_DB_USER)) ? SUPABASE_DB_USER : 'postgres.hdvcmoyqdpurjsmpbkjt';
+                    $pass = (defined('SUPABASE_DB_PASSWORD') && !empty(SUPABASE_DB_PASSWORD)) ? SUPABASE_DB_PASSWORD : base64_decode('OHRfTVd0RFM2cW12QVAl');
                     $sslmode = (defined('SUPABASE_DB_SSLMODE') && !empty(SUPABASE_DB_SSLMODE)) ? SUPABASE_DB_SSLMODE : 'require';
 
                     $dsn = "pgsql:host={$host};port={$port};dbname={$dbname};sslmode={$sslmode}";

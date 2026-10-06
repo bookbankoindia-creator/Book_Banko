@@ -98,18 +98,18 @@ if (!empty($dbUrl)) {
     }
 }
 
-// Supabase Constants with Production Defaults & Vercel Integration Support
+// Supabase Constants with Production Defaults & Vercel Integration Support (Mumbai ap-south-1)
 define('DB_DRIVER', getEnvValue('DB_DRIVER', 'pgsql'));
-define('SUPABASE_DB_HOST', getEnvValue('SUPABASE_DB_HOST') ?: (getEnvValue('POSTGRES_HOST') ?: ($parsedDbHost ?: 'aws-0-ap-northeast-1.pooler.supabase.com')));
+define('SUPABASE_DB_HOST', getEnvValue('SUPABASE_DB_HOST') ?: (getEnvValue('POSTGRES_HOST') ?: ($parsedDbHost ?: 'aws-0-ap-south-1.pooler.supabase.com')));
 define('SUPABASE_DB_PORT', getEnvValue('SUPABASE_DB_PORT') ?: (getEnvValue('POSTGRES_PORT') ?: ($parsedDbPort ?: '6543')));
 define('SUPABASE_DB_NAME', getEnvValue('SUPABASE_DB_NAME') ?: (getEnvValue('POSTGRES_DATABASE') ?: ($parsedDbName ?: 'postgres')));
-define('SUPABASE_DB_USER', getEnvValue('SUPABASE_DB_USER') ?: (getEnvValue('POSTGRES_USER') ?: ($parsedDbUser ?: 'postgres.rmwxhaxusmpuhwryseab')));
-define('SUPABASE_DB_PASSWORD', getEnvValue('SUPABASE_DB_PASSWORD') ?: (getEnvValue('POSTGRES_PASSWORD') ?: ($parsedDbPass ?: base64_decode('ZUR3JUdROCpGOHpUallT'))));
+define('SUPABASE_DB_USER', getEnvValue('SUPABASE_DB_USER') ?: (getEnvValue('POSTGRES_USER') ?: ($parsedDbUser ?: 'postgres.hdvcmoyqdpurjsmpbkjt')));
+define('SUPABASE_DB_PASSWORD', getEnvValue('SUPABASE_DB_PASSWORD') ?: (getEnvValue('POSTGRES_PASSWORD') ?: ($parsedDbPass ?: base64_decode('OHRfTVd0RFM2cW12QVAl'))));
 define('SUPABASE_DB_SSLMODE', getEnvValue('SUPABASE_DB_SSLMODE', 'require'));
 
-define('SUPABASE_URL', getEnvValue('SUPABASE_URL') ?: (getEnvValue('NEXT_PUBLIC_SUPABASE_URL') ?: 'https://rmwxhaxusmpuhwryseab.supabase.co'));
-define('SUPABASE_ANON_KEY', getEnvValue('SUPABASE_ANON_KEY') ?: (getEnvValue('NEXT_PUBLIC_SUPABASE_ANON_KEY') ?: base64_decode('c2JfcHVibGlzaGFibGVfeXlHTnhtR0h4a0pRSHB3UUNDano1d180TkFZU0VtaQ==')));
-define('SUPABASE_SERVICE_ROLE_KEY', getEnvValue('SUPABASE_SERVICE_ROLE_KEY') ?: (getEnvValue('SUPABASE_SERVICE_KEY') ?: base64_decode('c2Jfc2VjcmV0X3FFcUFSSGdpeURtUXFPanlDSlh0U0FfejBUVjdJSTU=')));
+define('SUPABASE_URL', getEnvValue('SUPABASE_URL') ?: (getEnvValue('NEXT_PUBLIC_SUPABASE_URL') ?: 'https://hdvcmoyqdpurjsmpbkjt.supabase.co'));
+define('SUPABASE_ANON_KEY', getEnvValue('SUPABASE_ANON_KEY') ?: (getEnvValue('NEXT_PUBLIC_SUPABASE_ANON_KEY') ?: base64_decode('c2JfcHVibGlzaGFibGVfRTNGbEZqcVROR3BGQlRzVkRPVzhkUV9XX1VhemRXWQ==')));
+define('SUPABASE_SERVICE_ROLE_KEY', getEnvValue('SUPABASE_SERVICE_ROLE_KEY') ?: (getEnvValue('SUPABASE_SERVICE_KEY') ?: base64_decode('c2JfcHVibGlzaGFibGVfRTNGbEZqcVROR3BGQlRzVkRPVzhkUV9XX1VhemRXWQ==')));
 
 
 
