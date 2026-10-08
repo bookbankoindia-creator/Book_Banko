@@ -364,9 +364,9 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
                   if (!_isLoading && _errorMessage == null)
                     _buildWatermarkOverlay(),
 
-                  // Layer 3: Interactive "Click here for best JEE & NEET Questions" Link
+                  // Layer 3: Interactive Page-specific JEE & NEET Questions Link
                   if (!_isLoading && _errorMessage == null)
-                    _buildJeeNeetLinkBanner(),
+                    _buildJeeNeetLinkBanner(appState, chapter),
                 ],
               ),
             ),
@@ -375,6 +375,160 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
           // 2. Fixed Bottom Navigation Bar in App Theme Color
           _buildBottomNavigationBar(),
         ],
+      ),
+    );
+  }
+
+  void _showPageQuestionsSheet(int page, BookBankoAppState appState, ChapterModel chapter) {
+    final subject = appState.selectedSubject?.name ?? 'Subject';
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryBlue.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.quiz_rounded, color: AppColors.primaryBlue, size: 24),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Page $page Questions & Tests',
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        '$subject • ${chapter.title}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            _buildQuestionOption(
+              icon: Icons.science_rounded,
+              color: const Color(0xFF0284C7),
+              title: 'JEE Main & Advanced Questions',
+              subtitle: 'Physics, Chemistry & Maths problems for Page $page',
+              onTap: () {
+                Navigator.pop(ctx);
+                Navigator.pushNamed(context, '/competitive_exams', arguments: {'exam': 'jee', 'page': page});
+              },
+            ),
+            const SizedBox(height: 10),
+            _buildQuestionOption(
+              icon: Icons.medication_rounded,
+              color: const Color(0xFF059669),
+              title: 'NEET Practice MCQs',
+              subtitle: 'Biology, Physics & Chemistry MCQs for Page $page',
+              onTap: () {
+                Navigator.pop(ctx);
+                Navigator.pushNamed(context, '/competitive_exams', arguments: {'exam': 'neet', 'page': page});
+              },
+            ),
+            const SizedBox(height: 10),
+            _buildQuestionOption(
+              icon: Icons.menu_book_rounded,
+              color: const Color(0xFFD97706),
+              title: 'Board Exam & Extra Practice',
+              subtitle: 'Important questions & chapter summary for Page $page',
+              onTap: () {
+                Navigator.pop(ctx);
+                Navigator.pushNamed(context, '/extra_material');
+              },
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuestionOption({
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textPrimary),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.black38),
+          ],
+        ),
       ),
     );
   }
@@ -418,7 +572,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
     );
   }
 
-  Widget _buildJeeNeetLinkBanner() {
+  Widget _buildJeeNeetLinkBanner(BookBankoAppState appState, ChapterModel chapter) {
     return Positioned(
       bottom: 8,
       left: 12,
@@ -426,9 +580,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
-            Navigator.pushNamed(context, '/competitive_exams');
-          },
+          onTap: () => _showPageQuestionsSheet(_currentPage, appState, chapter),
           borderRadius: BorderRadius.circular(12),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -447,19 +599,19 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
                 ),
               ],
             ),
-            child: const Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
+                const Icon(
                   Icons.stars_rounded,
                   color: Color(0xFFFFD54F),
                   size: 20,
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Flexible(
                   child: Text(
-                    '👉 Click here for the best JEE & NEET Questions',
-                    style: TextStyle(
+                    '👉 Page $_currentPage: Click for JEE & NEET Questions',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 13,
                       fontWeight: FontWeight.w800,
@@ -470,8 +622,8 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                SizedBox(width: 6),
-                Icon(
+                const SizedBox(width: 6),
+                const Icon(
                   Icons.arrow_forward_ios_rounded,
                   color: Colors.white,
                   size: 13,
