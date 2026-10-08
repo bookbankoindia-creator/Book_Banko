@@ -2,8 +2,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
-import 'package:pdfx/pdfx.dart';
 import 'package:provider/provider.dart';
+import 'package:syncfusion_flutter_pdf/pdf.dart' as sf_pdf;
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../config/app_config.dart';
 import '../models/app_state.dart';
@@ -19,13 +21,19 @@ class PdfReaderScreen extends StatefulWidget {
 }
 
 class _PdfReaderScreenState extends State<PdfReaderScreen> {
-  PdfControllerPinch? _pdfController;
+  late PdfViewerController _pdfViewerController;
+  Uint8List? _pdfBytes;
   bool _isLoading = true;
   String? _errorMessage;
   int _currentPage = 1;
   int _totalPages = 0;
   String _currentLoadedUrl = '';
-  final bool _isHorizontalScroll = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _pdfViewerController = PdfViewerController();
+  }
 
   @override
   void didChangeDependencies() {
@@ -119,11 +127,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
               final page = int.tryParse(textController.text.trim());
               if (page != null && page >= 1 && page <= _totalPages) {
                 Navigator.pop(ctx);
-                _pdfController?.animateToPage(
-                  pageNumber: page,
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeInOut,
-                );
+                _pdfViewerController.jumpToPage(page);
               }
             },
             style: ElevatedButton.styleFrom(
@@ -180,6 +184,28 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
     return rawUrl;
   }
 
+  Future<Uint8List> _flattenPdf(Uint8List rawBytes) async {
+    try {
+      final document = sf_pdf.PdfDocument(inputBytes: rawBytes);
+
+      // Flatten all annotations on every page so watermarks and annotations
+      // become integral rasterized vectors of the page itself.
+      for (int i = 0; i < document.pages.count; i++) {
+        final page = document.pages[i];
+        try {
+          page.annotations.flattenAllAnnotations();
+        } catch (_) {}
+      }
+
+      final output = await document.save();
+      document.dispose();
+      return Uint8List.fromList(output);
+    } catch (e) {
+      debugPrint('PDF flattening warning: $e');
+      return rawBytes;
+    }
+  }
+
   Future<void> _loadPdf(String url) async {
     setState(() {
       _isLoading = true;
@@ -187,12 +213,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
     });
 
     try {
-      if (_pdfController != null) {
-        _pdfController!.dispose();
-        _pdfController = null;
-      }
-
-      Uint8List? pdfBytes;
+      Uint8List? downloadedBytes;
       final normalizedUrl = _normalizePdfUrl(url);
 
       if (normalizedUrl.startsWith('http://') ||
@@ -202,7 +223,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
               .get(Uri.parse(normalizedUrl))
               .timeout(const Duration(seconds: 120));
           if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
-            pdfBytes = response.bodyBytes;
+            downloadedBytes = response.bodyBytes;
           }
         } catch (e) {
           debugPrint('Primary PDF download error: $e');
@@ -210,7 +231,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
       }
 
       // Fallback 1: Direct Supabase public CDN URL
-      if (pdfBytes == null && !normalizedUrl.contains('supabase.co')) {
+      if (downloadedBytes == null && !normalizedUrl.contains('supabase.co')) {
         final filename = url.split('/').last.split('?').first;
         if (filename.isNotEmpty) {
           final cdnUrl =
@@ -220,14 +241,14 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
                 .get(Uri.parse(cdnUrl))
                 .timeout(const Duration(seconds: 60));
             if (res.statusCode == 200 && res.bodyBytes.isNotEmpty) {
-              pdfBytes = res.bodyBytes;
+              downloadedBytes = res.bodyBytes;
             }
           } catch (_) {}
         }
       }
 
       // Fallback 2: Serverless uploads URL
-      if (pdfBytes == null) {
+      if (downloadedBytes == null) {
         final filename = url.split('/').last.split('?').first;
         final fallbackUrl = _normalizePdfUrl(
           '${ApiService.baseUrl.replaceAll('/api', '')}/uploads/pdfs/$filename',
@@ -237,29 +258,26 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
               .get(Uri.parse(fallbackUrl))
               .timeout(const Duration(seconds: 120));
           if (res.statusCode == 200 && res.bodyBytes.isNotEmpty) {
-            pdfBytes = res.bodyBytes;
+            downloadedBytes = res.bodyBytes;
           }
         } catch (e) {
           debugPrint('Fallback PDF download error: $e');
         }
       }
 
-      if (pdfBytes == null || pdfBytes.isEmpty) {
+      if (downloadedBytes == null || downloadedBytes.isEmpty) {
         throw Exception(
           'Could not connect to PDF cloud server. Please check your internet connection.',
         );
       }
 
-      final document = await PdfDocument.openData(pdfBytes);
+      // Flatten the PDF so all annotations, layers, and watermarks render accurately
+      final processedBytes = await _flattenPdf(downloadedBytes);
+
       if (!mounted) return;
 
-      _pdfController = PdfControllerPinch(
-        document: Future.value(document),
-        initialPage: 1,
-      );
-
       setState(() {
-        _totalPages = document.pagesCount;
+        _pdfBytes = processedBytes;
         _currentPage = 1;
         _isLoading = false;
       });
@@ -274,7 +292,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
 
   @override
   void dispose() {
-    _pdfController?.dispose();
+    _pdfViewerController.dispose();
     super.dispose();
   }
 
@@ -339,7 +357,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  // Layer 1: PDF Viewer
+                  // Layer 1: Flattened Syncfusion PDF Viewer
                   _buildPdfView(),
 
                   // Layer 2: Book Banko Diagonal Watermark
@@ -488,7 +506,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
       );
     }
 
-    if (_errorMessage != null || _pdfController == null) {
+    if (_errorMessage != null || _pdfBytes == null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -542,47 +560,42 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
       );
     }
 
-    return SizedBox.expand(
-      child: Center(
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: PdfViewPinch(
-            key: ValueKey('pdf_pinch_${_isHorizontalScroll ? 'h' : 'v'}'),
-            controller: _pdfController!,
-            scrollDirection:
-                _isHorizontalScroll ? Axis.horizontal : Axis.vertical,
-            backgroundDecoration:
-                const BoxDecoration(color: AppColors.canvasBg),
-            onDocumentLoaded: (document) {
-              setState(() {
-                _totalPages = document.pagesCount;
-              });
-            },
-            onPageChanged: (page) {
-              setState(() {
-                _currentPage = page;
-              });
-            },
-            builders: PdfViewPinchBuilders<DefaultBuilderOptions>(
-              options: const DefaultBuilderOptions(
-                loaderSwitchDuration: Duration(milliseconds: 150),
-              ),
-              documentLoaderBuilder: (_) => const Center(
-                child:
-                    CircularProgressIndicator(color: AppColors.primaryBlue),
-              ),
-              pageLoaderBuilder: (_) => const Center(
-                child:
-                    CircularProgressIndicator(color: AppColors.primaryBlue),
-              ),
-              errorBuilder: (context, error) => Center(
-                child: Text(
-                  'Error loading page: $error',
-                  style: const TextStyle(color: AppColors.textSecondary),
-                ),
-              ),
-            ),
-          ),
+    // Syncfusion Flutter PDF Viewer on flattened PDF bytes with full hyperlink support
+    return Center(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: SfPdfViewer.memory(
+          _pdfBytes!,
+          controller: _pdfViewerController,
+          enableDoubleTapZooming: true,
+          pageSpacing: 8,
+          canShowScrollHead: false,
+          canShowScrollStatus: false,
+          canShowPaginationDialog: false,
+          canShowHyperlinkDialog: false,
+          enableHyperlinkNavigation: true,
+          pageLayoutMode: PdfPageLayoutMode.single,
+          scrollDirection: PdfScrollDirection.horizontal,
+          onDocumentLoaded: (PdfDocumentLoadedDetails details) {
+            setState(() {
+              _totalPages = details.document.pages.count;
+            });
+          },
+          onPageChanged: (PdfPageChangedDetails details) {
+            setState(() {
+              _currentPage = details.newPageNumber;
+            });
+          },
+          onHyperlinkClicked: (PdfHyperlinkClickedDetails details) async {
+            final uri = Uri.tryParse(details.uri);
+            if (uri != null) {
+              try {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              } catch (e) {
+                debugPrint('Hyperlink launch error: $e');
+              }
+            }
+          },
         ),
       ),
     );
@@ -644,10 +657,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
                 constraints: const BoxConstraints(),
                 onPressed: _currentPage > 1
                     ? () {
-                        _pdfController?.previousPage(
-                          curve: Curves.easeInOut,
-                          duration: const Duration(milliseconds: 200),
-                        );
+                        _pdfViewerController.previousPage();
                       }
                     : null,
               ),
@@ -665,10 +675,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
                 constraints: const BoxConstraints(),
                 onPressed: _currentPage < _totalPages
                     ? () {
-                        _pdfController?.nextPage(
-                          curve: Curves.easeInOut,
-                          duration: const Duration(milliseconds: 200),
-                        );
+                        _pdfViewerController.nextPage();
                       }
                     : null,
               ),
