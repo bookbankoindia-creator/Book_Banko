@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
-import 'package:pdfx/pdfx.dart';
 import 'package:provider/provider.dart';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../config/app_config.dart';
 import '../models/app_state.dart';
@@ -18,13 +19,19 @@ class PdfReaderScreen extends StatefulWidget {
 }
 
 class _PdfReaderScreenState extends State<PdfReaderScreen> {
-  PdfControllerPinch? _pdfController;
+  late PdfViewerController _pdfViewerController;
+  Uint8List? _pdfBytes;
   bool _isLoading = true;
   String? _errorMessage;
   int _currentPage = 1;
   int _totalPages = 0;
   String _currentLoadedUrl = '';
-  final bool _isHorizontalScroll = true; // Horizontal book-flip mode
+
+  @override
+  void initState() {
+    super.initState();
+    _pdfViewerController = PdfViewerController();
+  }
 
   @override
   void didChangeDependencies() {
@@ -67,14 +74,21 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
           children: [
             Text(
               'Enter page number (1 - $_totalPages):',
-              style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: textController,
               keyboardType: TextInputType.number,
               autofocus: true,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
               decoration: InputDecoration(
                 hintText: 'e.g. 15',
                 filled: true,
@@ -85,7 +99,10 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
+                  borderSide: const BorderSide(
+                    color: AppColors.primaryBlue,
+                    width: 1.5,
+                  ),
                 ),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 14,
@@ -98,18 +115,17 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
               final page = int.tryParse(textController.text.trim());
               if (page != null && page >= 1 && page <= _totalPages) {
                 Navigator.pop(ctx);
-                _pdfController?.animateToPage(
-                  pageNumber: page,
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeInOut,
-                );
+                _pdfViewerController.jumpToPage(page);
               }
             },
             style: ElevatedButton.styleFrom(
@@ -173,11 +189,6 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
     });
 
     try {
-      if (_pdfController != null) {
-        _pdfController!.dispose();
-        _pdfController = null;
-      }
-
       Uint8List? pdfBytes;
       final normalizedUrl = _normalizePdfUrl(url);
 
@@ -236,16 +247,10 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
         );
       }
 
-      final document = await PdfDocument.openData(pdfBytes);
       if (!mounted) return;
 
-      _pdfController = PdfControllerPinch(
-        document: Future.value(document),
-        initialPage: 1,
-      );
-
       setState(() {
-        _totalPages = document.pagesCount;
+        _pdfBytes = pdfBytes;
         _currentPage = 1;
         _isLoading = false;
       });
@@ -260,7 +265,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
 
   @override
   void dispose() {
-    _pdfController?.dispose();
+    _pdfViewerController.dispose();
     super.dispose();
   }
 
@@ -313,25 +318,23 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
           ],
         ),
       ),
-      body: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            // 1. PDF Canvas Viewport - centered in the middle between AppBar and Bottom Bar
-            Expanded(
-              child: Container(
-                width: double.infinity,
-                height: double.infinity,
-                alignment: Alignment.center,
-                color: AppColors.canvasBg,
-                child: _buildBody(),
-              ),
+      body: Column(
+        children: [
+          // 1. PDF Canvas Viewport with upper & lower gap margins matching reference image
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              height: double.infinity,
+              color: AppColors.canvasBg,
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              alignment: Alignment.center,
+              child: _buildBody(),
             ),
+          ),
 
-            // 2. Fixed Bottom Navigation Bar in App Theme Color
-            _buildBottomNavigationBar(),
-          ],
-        ),
+          // 2. Fixed Bottom Navigation Bar in App Theme Color
+          _buildBottomNavigationBar(),
+        ],
       ),
     );
   }
@@ -358,7 +361,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
       );
     }
 
-    if (_errorMessage != null || _pdfController == null) {
+    if (_errorMessage != null || _pdfBytes == null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -383,7 +386,10 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
               const SizedBox(height: 8),
               Text(
                 _errorMessage ?? 'Unable to render the uploaded PDF file.',
-                style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -409,39 +415,42 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
       );
     }
 
-    // Perfectly Centered & Middle-aligned PDF Viewport
-    return SizedBox.expand(
-      child: Center(
-        child: PdfViewPinch(
-          key: ValueKey('pdf_pinch_${_isHorizontalScroll ? 'h' : 'v'}'),
-          controller: _pdfController!,
-          scrollDirection: _isHorizontalScroll ? Axis.horizontal : Axis.vertical,
-          backgroundDecoration: const BoxDecoration(color: AppColors.canvasBg),
-          onDocumentLoaded: (document) {
+    // Syncfusion PDF Viewer - renders all watermarks, link annotations, layers, and transparent overlays
+    return Center(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: SfPdfViewer.memory(
+          _pdfBytes!,
+          controller: _pdfViewerController,
+          enableDoubleTapZooming: true,
+          pageSpacing: 8,
+          canShowScrollHead: false,
+          canShowScrollStatus: false,
+          canShowPaginationDialog: false,
+          canShowHyperlinkDialog: false,
+          enableHyperlinkNavigation: true,
+          pageLayoutMode: PdfPageLayoutMode.single,
+          scrollDirection: PdfScrollDirection.horizontal,
+          onDocumentLoaded: (PdfDocumentLoadedDetails details) {
             setState(() {
-              _totalPages = document.pagesCount;
+              _totalPages = details.document.pages.count;
             });
           },
-          onPageChanged: (page) {
+          onPageChanged: (PdfPageChangedDetails details) {
             setState(() {
-              _currentPage = page;
+              _currentPage = details.newPageNumber;
             });
           },
-          builders: PdfViewPinchBuilders<DefaultBuilderOptions>(
-            options: const DefaultBuilderOptions(
-              loaderSwitchDuration: Duration(milliseconds: 150),
-            ),
-            documentLoaderBuilder: (_) =>
-                const Center(child: CircularProgressIndicator(color: AppColors.primaryBlue)),
-            pageLoaderBuilder: (_) =>
-                const Center(child: CircularProgressIndicator(color: AppColors.primaryBlue)),
-            errorBuilder: (context, error) => Center(
-              child: Text(
-                'Error loading page: $error',
-                style: const TextStyle(color: AppColors.textSecondary),
-              ),
-            ),
-          ),
+          onHyperlinkClicked: (PdfHyperlinkClickedDetails details) async {
+            final uri = Uri.tryParse(details.uri);
+            if (uri != null) {
+              try {
+                await launchUrl(uri, mode: LaunchMode.externalApplication);
+              } catch (e) {
+                debugPrint('Hyperlink launch error: $e');
+              }
+            }
+          },
         ),
       ),
     );
@@ -503,10 +512,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
                 constraints: const BoxConstraints(),
                 onPressed: _currentPage > 1
                     ? () {
-                        _pdfController?.previousPage(
-                          curve: Curves.easeInOut,
-                          duration: const Duration(milliseconds: 200),
-                        );
+                        _pdfViewerController.previousPage();
                       }
                     : null,
               ),
@@ -524,10 +530,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
                 constraints: const BoxConstraints(),
                 onPressed: _currentPage < _totalPages
                     ? () {
-                        _pdfController?.nextPage(
-                          curve: Curves.easeInOut,
-                          duration: const Duration(milliseconds: 200),
-                        );
+                        _pdfViewerController.nextPage();
                       }
                     : null,
               ),
