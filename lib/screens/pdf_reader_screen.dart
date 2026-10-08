@@ -8,6 +8,7 @@ import '../config/app_config.dart';
 import '../models/app_state.dart';
 import '../models/data_models.dart';
 import '../services/api_services.dart';
+import '../theme/app_theme.dart';
 
 class PdfReaderScreen extends StatefulWidget {
   const PdfReaderScreen({super.key});
@@ -23,11 +24,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
   int _currentPage = 1;
   int _totalPages = 0;
   String _currentLoadedUrl = '';
-  bool _isHorizontalScroll = true; // Horizontal book-flip mode matching the reference design
-
-  // Theme golden yellow color from user's reference design
-  static const Color headerGolden = Color(0xFFFBBF24);
-  static const Color bottomBarGolden = Color(0xFFFBBF24);
+  final bool _isHorizontalScroll = true; // Horizontal book-flip mode
 
   @override
   void didChangeDependencies() {
@@ -52,14 +49,14 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
-            Icon(Icons.edit, color: Colors.black87),
+            Icon(Icons.edit, color: AppColors.primaryBlue),
             SizedBox(width: 8),
             Text(
               'Go to Page',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                color: AppColors.textPrimary,
               ),
             ),
           ],
@@ -70,23 +67,30 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
           children: [
             Text(
               'Enter page number (1 - $_totalPages):',
-              style: const TextStyle(fontSize: 14, color: Colors.black87),
+              style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: textController,
               keyboardType: TextInputType.number,
               autofocus: true,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
               decoration: InputDecoration(
                 hintText: 'e.g. 15',
                 filled: true,
-                fillColor: const Color(0xFFF8FAFC),
+                fillColor: AppColors.lightBlueBg,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  borderSide: const BorderSide(color: AppColors.borderLight),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: AppColors.primaryBlue, width: 1.5),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
               ),
             ),
           ],
@@ -94,7 +98,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            child: const Text('Cancel', style: TextStyle(color: AppColors.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -109,125 +113,19 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: headerGolden,
-              foregroundColor: Colors.black,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: const Text('Go', style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showInfoDialog(BookBankoAppState appState, ChapterModel chapter) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: headerGolden.withValues(alpha: 0.3),
+              backgroundColor: AppColors.primaryBlue,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.info_outline_rounded, color: Colors.black87),
             ),
-            const SizedBox(width: 10),
-            const Text(
-              'Chapter Details',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+            child: const Text(
+              'Go',
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildInfoRow('Chapter:', chapter.title),
-            const SizedBox(height: 8),
-            _buildInfoRow('Subject:', appState.selectedSubject?.name ?? 'General Science'),
-            const SizedBox(height: 8),
-            _buildInfoRow('Board & Std:', '${appState.selectedBoard} • Std ${appState.activeStandardNumber}'),
-            const SizedBox(height: 8),
-            _buildInfoRow('Total Pages:', '$_totalPages Pages'),
-            const Divider(height: 24),
-            // JEE & NEET Practice banner
-            InkWell(
-              onTap: () {
-                Navigator.pop(ctx);
-                Navigator.pushNamed(context, '/competitive_exams');
-              },
-              borderRadius: BorderRadius.circular(10),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFFDE68A)),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.workspace_premium_rounded, color: Color(0xFFD97706), size: 24),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'JEE & NEET Questions',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF92400E)),
-                          ),
-                          Text(
-                            'Click here for competitive practice sets',
-                            style: TextStyle(fontSize: 11, color: Color(0xFFB45309)),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFFD97706)),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: headerGolden,
-              foregroundColor: Colors.black,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: const Text('Close', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 90,
-          child: Text(
-            label,
-            style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.black54, fontSize: 13),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.black87, fontSize: 13),
-          ),
-        ),
-      ],
     );
   }
 
@@ -242,16 +140,28 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
     final backendRoot = activeBase.replaceAll('/api', '');
 
     if (rawUrl.contains('localhost/Book_Banko/backend')) {
-      return rawUrl.replaceAll('http://localhost/Book_Banko/backend', backendRoot);
+      return rawUrl.replaceAll(
+        'http://localhost/Book_Banko/backend',
+        backendRoot,
+      );
     }
     if (rawUrl.contains('192.168.0.102/Book_Banko/backend')) {
-      return rawUrl.replaceAll('http://192.168.0.102/Book_Banko/backend', backendRoot);
+      return rawUrl.replaceAll(
+        'http://192.168.0.102/Book_Banko/backend',
+        backendRoot,
+      );
     }
     if (rawUrl.contains('10.0.2.2/Book_Banko/backend')) {
-      return rawUrl.replaceAll('http://10.0.2.2/Book_Banko/backend', backendRoot);
+      return rawUrl.replaceAll(
+        'http://10.0.2.2/Book_Banko/backend',
+        backendRoot,
+      );
     }
     if (rawUrl.contains('127.0.0.1/Book_Banko/backend')) {
-      return rawUrl.replaceAll('http://127.0.0.1/Book_Banko/backend', backendRoot);
+      return rawUrl.replaceAll(
+        'http://127.0.0.1/Book_Banko/backend',
+        backendRoot,
+      );
     }
     return rawUrl;
   }
@@ -271,9 +181,12 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
       Uint8List? pdfBytes;
       final normalizedUrl = _normalizePdfUrl(url);
 
-      if (normalizedUrl.startsWith('http://') || normalizedUrl.startsWith('https://')) {
+      if (normalizedUrl.startsWith('http://') ||
+          normalizedUrl.startsWith('https://')) {
         try {
-          final response = await http.get(Uri.parse(normalizedUrl)).timeout(const Duration(seconds: 120));
+          final response = await http
+              .get(Uri.parse(normalizedUrl))
+              .timeout(const Duration(seconds: 120));
           if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
             pdfBytes = response.bodyBytes;
           }
@@ -286,9 +199,12 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
       if (pdfBytes == null && !normalizedUrl.contains('supabase.co')) {
         final filename = url.split('/').last.split('?').first;
         if (filename.isNotEmpty) {
-          final cdnUrl = '${AppConfig.supabaseUrl}/storage/v1/object/public/pdfs/$filename';
+          final cdnUrl =
+              '${AppConfig.supabaseUrl}/storage/v1/object/public/pdfs/$filename';
           try {
-            final res = await http.get(Uri.parse(cdnUrl)).timeout(const Duration(seconds: 60));
+            final res = await http
+                .get(Uri.parse(cdnUrl))
+                .timeout(const Duration(seconds: 60));
             if (res.statusCode == 200 && res.bodyBytes.isNotEmpty) {
               pdfBytes = res.bodyBytes;
             }
@@ -299,9 +215,13 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
       // Fallback 2: Serverless uploads URL
       if (pdfBytes == null) {
         final filename = url.split('/').last.split('?').first;
-        final fallbackUrl = _normalizePdfUrl('${ApiService.baseUrl.replaceAll('/api', '')}/uploads/pdfs/$filename');
+        final fallbackUrl = _normalizePdfUrl(
+          '${ApiService.baseUrl.replaceAll('/api', '')}/uploads/pdfs/$filename',
+        );
         try {
-          final res = await http.get(Uri.parse(fallbackUrl)).timeout(const Duration(seconds: 120));
+          final res = await http
+              .get(Uri.parse(fallbackUrl))
+              .timeout(const Duration(seconds: 120));
           if (res.statusCode == 200 && res.bodyBytes.isNotEmpty) {
             pdfBytes = res.bodyBytes;
           }
@@ -311,7 +231,9 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
       }
 
       if (pdfBytes == null || pdfBytes.isEmpty) {
-        throw Exception('Could not connect to PDF cloud server. Please check your internet connection.');
+        throw Exception(
+          'Could not connect to PDF cloud server. Please check your internet connection.',
+        );
       }
 
       final document = await PdfDocument.openData(pdfBytes);
@@ -347,17 +269,21 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
     final appState = Provider.of<BookBankoAppState>(context);
     final chapter = appState.selectedChapter ?? ChapterModel.mathChapters[0];
     final subject = appState.selectedSubject;
-    final subjectTitle = subject?.name.isNotEmpty == true ? subject!.name : chapter.title;
-    final standardText = appState.activeStandardNumber > 0 ? 'ધોરણ – ${appState.activeStandardNumber}' : 'ધોરણ – 10';
+    final subjectTitle = subject?.name.isNotEmpty == true
+        ? subject!.name
+        : chapter.title;
+    final standardText = appState.activeStandardNumber > 0
+        ? 'ધોરણ – ${appState.activeStandardNumber}'
+        : 'ધોરણ – 10';
 
     return Scaffold(
-      backgroundColor: Colors.white, // Pure white background matching reference image
+      backgroundColor: AppColors.canvasBg, // App theme background
       appBar: AppBar(
-        backgroundColor: headerGolden, // Golden Yellow matching reference image
+        backgroundColor: AppColors.primaryBlue, // App theme primary blue
         elevation: 0,
         centerTitle: false,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black, size: 24),
+          icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -367,7 +293,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
             Text(
               subjectTitle,
               style: const TextStyle(
-                color: Colors.black,
+                color: Colors.white,
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 0.2,
@@ -378,37 +304,30 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
             const SizedBox(height: 1),
             Text(
               standardText,
-              style: const TextStyle(
-                color: Colors.black87,
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.85),
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ],
         ),
-        actions: [
-          // Info Details Dialog Button
-          IconButton(
-            icon: const Icon(Icons.info_outline_rounded, color: Colors.black, size: 24),
-            tooltip: 'Chapter Details',
-            onPressed: () => _showInfoDialog(appState, chapter),
-          ),
-          const SizedBox(width: 8),
-        ],
       ),
       body: SafeArea(
         top: false,
         child: Column(
           children: [
-            // 1. PDF Canvas Viewport (Edge-to-edge white background without dark margins)
+            // 1. PDF Canvas Viewport centered between AppBar and Bottom Bar
             Expanded(
-              child: Container(
-                color: Colors.white,
-                child: _buildBody(),
+              child: Center(
+                child: Container(
+                  color: AppColors.canvasBg,
+                  child: _buildBody(),
+                ),
               ),
             ),
 
-            // 2. Fixed Bottom Navigation Bar matching reference design
+            // 2. Fixed Bottom Navigation Bar in App Theme Color
             _buildBottomNavigationBar(),
           ],
         ),
@@ -418,18 +337,18 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return Center(
+      return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            CircularProgressIndicator(color: headerGolden),
+          children: [
+            CircularProgressIndicator(color: AppColors.primaryBlue),
             SizedBox(height: 16),
             Text(
               'Loading PDF Document...',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: Colors.black54,
+                color: AppColors.textSecondary,
               ),
             ),
           ],
@@ -447,7 +366,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
               const Icon(
                 Icons.picture_as_pdf_rounded,
                 size: 64,
-                color: Colors.redAccent,
+                color: AppColors.error,
               ),
               const SizedBox(height: 16),
               const Text(
@@ -455,16 +374,13 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 _errorMessage ?? 'Unable to render the uploaded PDF file.',
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Colors.black54,
-                ),
+                style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
@@ -473,9 +389,12 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
                 icon: const Icon(Icons.refresh),
                 label: const Text('Try Again'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: headerGolden,
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  backgroundColor: AppColors.primaryBlue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -487,38 +406,36 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
       );
     }
 
-    // Pinch-Zoomable, aspect-ratio-preserving PDF Viewer on seamless white canvas
-    return PdfViewPinch(
-      key: ValueKey('pdf_pinch_${_isHorizontalScroll ? 'h' : 'v'}'),
-      controller: _pdfController!,
-      scrollDirection: _isHorizontalScroll ? Axis.horizontal : Axis.vertical,
-      backgroundDecoration: const BoxDecoration(
-        color: Colors.white,
-      ),
-      onDocumentLoaded: (document) {
-        setState(() {
-          _totalPages = document.pagesCount;
-        });
-      },
-      onPageChanged: (page) {
-        setState(() {
-          _currentPage = page;
-        });
-      },
-      builders: PdfViewPinchBuilders<DefaultBuilderOptions>(
-        options: const DefaultBuilderOptions(
-          loaderSwitchDuration: Duration(milliseconds: 150),
-        ),
-        documentLoaderBuilder: (_) => const Center(
-          child: CircularProgressIndicator(color: headerGolden),
-        ),
-        pageLoaderBuilder: (_) => const Center(
-          child: CircularProgressIndicator(color: headerGolden),
-        ),
-        errorBuilder: (context, error) => Center(
-          child: Text(
-            'Error loading page: $error',
-            style: const TextStyle(color: Colors.black54),
+    // Centered, Pinch-Zoomable PDF Viewer on App Theme Canvas
+    return Center(
+      child: PdfViewPinch(
+        key: ValueKey('pdf_pinch_${_isHorizontalScroll ? 'h' : 'v'}'),
+        controller: _pdfController!,
+        scrollDirection: _isHorizontalScroll ? Axis.horizontal : Axis.vertical,
+        backgroundDecoration: const BoxDecoration(color: AppColors.canvasBg),
+        onDocumentLoaded: (document) {
+          setState(() {
+            _totalPages = document.pagesCount;
+          });
+        },
+        onPageChanged: (page) {
+          setState(() {
+            _currentPage = page;
+          });
+        },
+        builders: PdfViewPinchBuilders<DefaultBuilderOptions>(
+          options: const DefaultBuilderOptions(
+            loaderSwitchDuration: Duration(milliseconds: 150),
+          ),
+          documentLoaderBuilder: (_) =>
+              const Center(child: CircularProgressIndicator(color: AppColors.primaryBlue)),
+          pageLoaderBuilder: (_) =>
+              const Center(child: CircularProgressIndicator(color: AppColors.primaryBlue)),
+          errorBuilder: (context, error) => Center(
+            child: Text(
+              'Error loading page: $error',
+              style: const TextStyle(color: AppColors.textSecondary),
+            ),
           ),
         ),
       ),
@@ -530,11 +447,11 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
       height: 58,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: const BoxDecoration(
-        color: bottomBarGolden,
+        color: AppColors.primaryBlue, // Theme color for navigation bar
         boxShadow: [
           BoxShadow(
-            color: Color(0x1A000000),
-            blurRadius: 4,
+            color: Color(0x2A000000),
+            blurRadius: 6,
             offset: Offset(0, -2),
           ),
         ],
@@ -552,13 +469,13 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
                   style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
-                    color: Colors.black,
+                    color: Colors.white,
                   ),
                 ),
               ),
               const SizedBox(width: 14),
               IconButton(
-                icon: const Icon(Icons.edit, color: Colors.black, size: 22),
+                icon: const Icon(Icons.edit, color: Colors.white, size: 22),
                 tooltip: 'Go to Page',
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
@@ -573,7 +490,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
               IconButton(
                 icon: Icon(
                   Icons.chevron_left_rounded,
-                  color: _currentPage > 1 ? Colors.black : Colors.black26,
+                  color: _currentPage > 1 ? Colors.white : Colors.white38,
                   size: 38,
                 ),
                 tooltip: 'Previous Page',
@@ -592,7 +509,9 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
               IconButton(
                 icon: Icon(
                   Icons.chevron_right_rounded,
-                  color: _currentPage < _totalPages ? Colors.black : Colors.black26,
+                  color: _currentPage < _totalPages
+                      ? Colors.white
+                      : Colors.white38,
                   size: 38,
                 ),
                 tooltip: 'Next Page',
