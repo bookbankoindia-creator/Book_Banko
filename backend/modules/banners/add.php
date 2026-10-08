@@ -26,19 +26,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $status = $_POST['status'] ?? 'active';
 
         $imagePath = 'banner_default.png';
+        $uploadError = false;
 
         if (isset($_FILES['banner_image']) && $_FILES['banner_image']['error'] !== UPLOAD_ERR_NO_FILE) {
             $uploadResult = uploadFile($_FILES['banner_image'], BANNER_UPLOADS_PATH, ['jpg', 'jpeg', 'png', 'webp'], 10);
             if ($uploadResult['status']) {
                 $imagePath = $uploadResult['filename'];
             } else {
+                $uploadError = true;
                 flash('error', $uploadResult['message']);
             }
         }
 
-        if (empty($title)) {
-            flash('error', 'Banner title is required.');
-        } else {
+        if (!$uploadError) {
+            if (empty($title)) {
+                flash('error', 'Banner title is required.');
+            } else {
             try {
                 $stmt = $db->prepare("
                     INSERT INTO banners (title, sub_title, image_path, action_type, action_value, display_order, status)
@@ -59,6 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } catch (PDOException $e) {
                 flash('error', 'Database error: ' . $e->getMessage());
             }
+        }
         }
     }
 }
