@@ -183,77 +183,6 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
     return rawUrl;
   }
 
-  Future<Uint8List> _flattenAndEnhancePdf(Uint8List rawBytes, ChapterModel chapter) async {
-    try {
-      final document = sf_pdf.PdfDocument(inputBytes: rawBytes);
-      final defaultUrl = 'https://docs.google.com/document/d/1KpHDVKmK_OJhktZPq0wOphWFlPFUJE2jIIJCiC_Fz30/edit?tab=t.0';
-
-      for (int i = 0; i < document.pages.count; i++) {
-        final page = document.pages[i];
-        final pageNumber = i + 1;
-        final targetPageUrl = chapter.getLinkForPage(pageNumber) ?? defaultUrl;
-
-        // 1. Reset cropBox to page size so bottom/top footers are never clipped
-        try {
-          page.cropBox = Rect.fromLTWH(0, 0, page.size.width, page.size.height);
-        } catch (_) {}
-
-        // 2. Add diagonal "Book Banko" watermark across center if needed
-        try {
-          final wmFont = sf_pdf.PdfStandardFont(sf_pdf.PdfFontFamily.helvetica, 36, style: sf_pdf.PdfFontStyle.bold);
-          final wmText = 'Book Banko';
-          final wmSize = wmFont.measureString(wmText);
-
-          final gState = page.graphics.save();
-          page.graphics.translateTransform(page.size.width / 2, page.size.height / 2);
-          page.graphics.rotateTransform(-32);
-          page.graphics.drawString(
-            wmText,
-            wmFont,
-            brush: sf_pdf.PdfSolidBrush(sf_pdf.PdfColor(0, 97, 164, 30)), // ~12% opacity
-            bounds: Rect.fromLTWH(-wmSize.width / 2, -wmSize.height / 2, wmSize.width, wmSize.height),
-          );
-          page.graphics.restore(gState);
-        } catch (_) {}
-
-        // 3. Render the interactive footer: "Click here for the best JEE & NEET questions."
-        try {
-          final font = sf_pdf.PdfStandardFont(sf_pdf.PdfFontFamily.helvetica, 12, style: sf_pdf.PdfFontStyle.regular);
-          final linkText = 'Click here for the best JEE & NEET questions.';
-          final textSize = font.measureString(linkText);
-          final linkRect = Rect.fromLTWH(
-            (page.size.width - textSize.width) / 2,
-            page.size.height - 30,
-            textSize.width,
-            20,
-          );
-
-          // Draw the blue text directly onto the PDF canvas
-          page.graphics.drawString(
-            linkText,
-            font,
-            brush: sf_pdf.PdfSolidBrush(sf_pdf.PdfColor(29, 78, 216)), // #1D4ED8 blue
-            bounds: linkRect,
-          );
-
-          // Add interactive URI Annotation for this page
-          final uriAnnotation = sf_pdf.PdfUriAnnotation(
-            bounds: linkRect,
-            uri: targetPageUrl,
-          );
-          page.annotations.add(uriAnnotation);
-        } catch (_) {}
-      }
-
-      final output = await document.save();
-      document.dispose();
-      return Uint8List.fromList(output);
-    } catch (e) {
-      debugPrint('PDF enhancement warning: $e');
-      return rawBytes;
-    }
-  }
-
   Future<void> _loadPdf(String url, [ChapterModel? chapter]) async {
     setState(() {
       _isLoading = true;
@@ -319,15 +248,10 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
         );
       }
 
-      final activeChapter = chapter ?? ChapterModel.mathChapters[0];
-
-      // Flatten and enhance PDF so annotations, watermarks and clickable footer links are rendered seamlessly
-      final processedBytes = await _flattenAndEnhancePdf(downloadedBytes, activeChapter);
-
       if (!mounted) return;
 
       setState(() {
-        _pdfBytes = processedBytes;
+        _pdfBytes = downloadedBytes;
         _currentPage = 1;
         _isLoading = false;
       });
