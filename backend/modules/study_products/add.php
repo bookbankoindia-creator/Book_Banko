@@ -29,8 +29,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $imageFileName = '';
 
-        // Handle Image File Upload (png, jpg, jpeg, webp)
-        if (isset($_FILES['product_image']) && $_FILES['product_image']['error'] !== UPLOAD_ERR_NO_FILE) {
+        // Handle Image File Upload (direct client-side upload or standard)
+        if (!empty($_POST['direct_uploaded_file'])) {
+            $imageFileName = trim($_POST['direct_uploaded_file']);
+        } elseif (isset($_FILES['product_image']) && $_FILES['product_image']['error'] !== UPLOAD_ERR_NO_FILE) {
             $uploadResult = uploadFile($_FILES['product_image'], PRODUCTS_UPLOADS_PATH, ['jpg', 'jpeg', 'png', 'webp'], 20);
             if ($uploadResult['status']) {
                 $imageFileName = $uploadResult['filename'];

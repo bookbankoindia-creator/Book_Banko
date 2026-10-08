@@ -21,7 +21,14 @@
 <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-<script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+<!-- Supabase Client Config & Direct Uploader (Bypasses Serverless Request Size Limits) -->
+<script>
+window.SUPABASE_CONFIG = {
+    url: '<?= defined('SUPABASE_URL') ? SUPABASE_URL : '' ?>',
+    anonKey: '<?= defined('SUPABASE_ANON_KEY') ? SUPABASE_ANON_KEY : '' ?>'
+};
+</script>
+<script src="<?= ASSETS_URL ?>js/supabase_uploader.js"></script>
 
 <script>
 $(document).ready(function() {

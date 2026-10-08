@@ -44,8 +44,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $fileSizeMB = $chapter['file_size_mb'];
         $uploadError = false;
 
-        // Check if new PDF file was uploaded
-        if (isset($_FILES['pdf_file']) && $_FILES['pdf_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+        // Check if new PDF file was uploaded (direct or standard)
+        if (!empty($_POST['direct_uploaded_file'])) {
+            $pdfFileName = trim($_POST['direct_uploaded_file']);
+            $fileSizeMB = (float)($_POST['direct_file_size_mb'] ?? 0.0);
+        } elseif (isset($_FILES['pdf_file']) && $_FILES['pdf_file']['error'] !== UPLOAD_ERR_NO_FILE) {
             $uploadResult = uploadFile($_FILES['pdf_file'], PDF_UPLOADS_PATH, ['pdf'], 500);
             if ($uploadResult['status']) {
                 // Delete old file if exists

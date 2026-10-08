@@ -55,8 +55,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdfFileName = $material['pdf_file_path'];
             $fileSizeMB = $material['file_size_mb'];
 
-            // Handle New PDF File Upload (optional replacement)
-            if (isset($_FILES['pdf_file']) && $_FILES['pdf_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+            // Handle New PDF File Upload (direct client-side upload or standard)
+            if (!empty($_POST['direct_uploaded_file'])) {
+                $pdfFileName = trim($_POST['direct_uploaded_file']);
+                $fileSizeMB = (float)($_POST['direct_file_size_mb'] ?? 0.0);
+            } elseif (isset($_FILES['pdf_file']) && $_FILES['pdf_file']['error'] !== UPLOAD_ERR_NO_FILE) {
                 $uploadResult = uploadFile($_FILES['pdf_file'], PDF_UPLOADS_PATH, ['pdf'], 500);
                 if ($uploadResult['status']) {
                     // Delete old file if exists

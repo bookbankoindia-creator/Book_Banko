@@ -39,8 +39,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $fileSizeMB = 0.00;
             $uploadError = false;
 
-            // Check file upload (up to 500MB)
-            if (isset($_FILES['pdf_file']) && $_FILES['pdf_file']['error'] !== UPLOAD_ERR_NO_FILE) {
+            // Check file upload (direct client-side upload or standard upload)
+            if (!empty($_POST['direct_uploaded_file'])) {
+                $pdfFileName = trim($_POST['direct_uploaded_file']);
+                $fileSizeMB = (float)($_POST['direct_file_size_mb'] ?? 0.0);
+            } elseif (isset($_FILES['pdf_file']) && $_FILES['pdf_file']['error'] !== UPLOAD_ERR_NO_FILE) {
                 $uploadResult = uploadFile($_FILES['pdf_file'], PDF_UPLOADS_PATH, ['pdf'], 500);
                 if ($uploadResult['status']) {
                     $pdfFileName = $uploadResult['filename'];

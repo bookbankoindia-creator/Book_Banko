@@ -39,7 +39,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $imagePath = $banner['image_path'];
 
-        if (isset($_FILES['banner_image']) && $_FILES['banner_image']['error'] !== UPLOAD_ERR_NO_FILE) {
+        if (!empty($_POST['direct_uploaded_file'])) {
+            $imagePath = trim($_POST['direct_uploaded_file']);
+        } elseif (isset($_FILES['banner_image']) && $_FILES['banner_image']['error'] !== UPLOAD_ERR_NO_FILE) {
             $uploadResult = uploadFile($_FILES['banner_image'], BANNER_UPLOADS_PATH, ['jpg', 'jpeg', 'png', 'webp'], 10);
             if ($uploadResult['status']) {
                 if (!empty($banner['image_path']) && file_exists(BANNER_UPLOADS_PATH . $banner['image_path'])) {

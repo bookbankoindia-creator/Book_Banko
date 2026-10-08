@@ -92,8 +92,30 @@ function verifyCSRFToken(?string $token): bool {
     return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], (string)$token);
 }
 
-// File Upload Handlers (Supports both Local Storage & Supabase Storage)
+// File Upload Handlers (Supports Direct Client-Side Uploads, Local Storage & Supabase Storage)
 function uploadFile(array $file, string $targetDir, array $allowedExtensions = ['pdf'], int $maxSizeMB = 500): array {
+    // If client-side direct upload already pushed to Supabase
+    if (!empty($_POST['direct_uploaded_file'])) {
+        $filename = clean($_POST['direct_uploaded_file']);
+        $fileSizeMB = isset($_POST['direct_file_size_mb']) ? (float)$_POST['direct_file_size_mb'] : 0.0;
+        $bucket = 'pdfs';
+        if (str_contains($targetDir, 'banners')) {
+            $bucket = 'banners';
+        } elseif (str_contains($targetDir, 'products')) {
+            $bucket = 'products';
+        } elseif (str_contains($targetDir, 'icons')) {
+            $bucket = 'icons';
+        }
+        return [
+            'status' => true,
+            'filename' => $filename,
+            'path' => $targetDir . '/' . $filename,
+            'public_url' => resolveMediaUrl($filename, $bucket),
+            'size_mb' => $fileSizeMB,
+            'original_name' => $filename
+        ];
+    }
+
     if (!isset($file['error']) || is_array($file['error'])) {
         return ['status' => false, 'message' => 'Invalid file parameter.'];
     }
