@@ -42,10 +42,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $pdfFileName = $chapter['pdf_file_path'];
         $fileSizeMB = $chapter['file_size_mb'];
+        $uploadError = false;
 
         // Check if new PDF file was uploaded
         if (isset($_FILES['pdf_file']) && $_FILES['pdf_file']['error'] !== UPLOAD_ERR_NO_FILE) {
-            $uploadResult = uploadFile($_FILES['pdf_file'], PDF_UPLOADS_PATH, ['pdf'], 100);
+            $uploadResult = uploadFile($_FILES['pdf_file'], PDF_UPLOADS_PATH, ['pdf'], 500);
             if ($uploadResult['status']) {
                 // Delete old file if exists
                 if (!empty($chapter['pdf_file_path']) && file_exists(PDF_UPLOADS_PATH . $chapter['pdf_file_path'])) {
@@ -54,13 +55,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pdfFileName = $uploadResult['filename'];
                 $fileSizeMB = $uploadResult['size_mb'];
             } else {
+                $uploadError = true;
                 flash('error', $uploadResult['message']);
             }
         }
 
-        if (empty($subjectId) || empty($title)) {
-            flash('error', 'Subject selection and chapter title are required.');
-        } else {
+        if (!$uploadError) {
+            if (empty($subjectId) || empty($title)) {
+                flash('error', 'Subject selection and chapter title are required.');
+            } else {
             try {
                 $update = $db->prepare("
                     UPDATE chapters_content 
@@ -90,6 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } catch (PDOException $e) {
                 flash('error', 'Update error: ' . $e->getMessage());
             }
+        }
         }
     }
 }

@@ -37,6 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $pdfFileName = '';
             $fileSizeMB = 0.00;
+            $uploadError = false;
 
             // Check file upload (up to 500MB)
             if (isset($_FILES['pdf_file']) && $_FILES['pdf_file']['error'] !== UPLOAD_ERR_NO_FILE) {
@@ -45,43 +46,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $pdfFileName = $uploadResult['filename'];
                     $fileSizeMB = $uploadResult['size_mb'];
                 } else {
+                    $uploadError = true;
                     flash('error', $uploadResult['message']);
                 }
             }
 
-            if (empty($subjectId) || empty($title)) {
-                flash('error', 'Subject selection and chapter title are required.');
-            } else {
-                try {
-                    $stmt = $db->prepare("
-                        INSERT INTO chapters_content (
-                            subject_id, module_id, chapter_number, title, description, 
-                            pdf_file_path, pdf_external_url, page_count, file_size_mb, 
-                            display_order, status
-                        ) VALUES (
-                            :sub, :mod, :chap_num, :title, :desc, 
-                            :file, :url, :pages, :size, 
-                            :order, :status
-                        )
-                    ");
-                    $stmt->execute([
-                        ':sub' => $subjectId,
-                        ':mod' => $moduleId,
-                        ':chap_num' => $chapterNumber,
-                        ':title' => $title,
-                        ':desc' => $description,
-                        ':file' => $pdfFileName,
-                        ':url' => $externalUrl,
-                        ':pages' => $pageCount,
-                        ':size' => $fileSizeMB,
-                        ':order' => $displayOrder,
-                        ':status' => $status
-                    ]);
-                    flash('success', "Chapter '{$title}' added successfully.");
-                    header('Location: ' . url('modules/chapters/index.php?subject_id=' . $subjectId));
-                    exit;
-                } catch (PDOException $e) {
-                    flash('error', 'Database error: ' . $e->getMessage());
+            if (!$uploadError) {
+                if (empty($subjectId) || empty($title)) {
+                    flash('error', 'Subject selection and chapter title are required.');
+                } else {
+                    try {
+                        $stmt = $db->prepare("
+                            INSERT INTO chapters_content (
+                                subject_id, module_id, chapter_number, title, description, 
+                                pdf_file_path, pdf_external_url, page_count, file_size_mb, 
+                                display_order, status
+                            ) VALUES (
+                                :sub, :mod, :chap_num, :title, :desc, 
+                                :file, :url, :pages, :size, 
+                                :order, :status
+                            )
+                        ");
+                        $stmt->execute([
+                            ':sub' => $subjectId,
+                            ':mod' => $moduleId,
+                            ':chap_num' => $chapterNumber,
+                            ':title' => $title,
+                            ':desc' => $description,
+                            ':file' => $pdfFileName,
+                            ':url' => $externalUrl,
+                            ':pages' => $pageCount,
+                            ':size' => $fileSizeMB,
+                            ':order' => $displayOrder,
+                            ':status' => $status
+                        ]);
+                        flash('success', "Chapter '{$title}' added successfully.");
+                        header('Location: ' . url('modules/chapters/index.php?subject_id=' . $subjectId));
+                        exit;
+                    } catch (PDOException $e) {
+                        flash('error', 'Database error: ' . $e->getMessage());
+                    }
                 }
             }
         }

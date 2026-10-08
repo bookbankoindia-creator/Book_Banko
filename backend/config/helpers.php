@@ -107,17 +107,14 @@ function uploadFile(array $file, string $targetDir, array $allowedExtensions = [
         return ['status' => false, 'message' => "File exceeds the {$maxSizeMB}MB maximum size limit."];
     }
 
-    $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    $ext = strtolower(pathinfo($file['name'] ?? '', PATHINFO_EXTENSION));
     if (!in_array($ext, $allowedExtensions)) {
         return ['status' => false, 'message' => 'Invalid file extension. Allowed: ' . implode(', ', $allowedExtensions)];
     }
 
     $filename = uniqid('bb_', true) . '.' . $ext;
     $targetPath = rtrim($targetDir, '/') . '/' . $filename;
-
-    if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
-        return ['status' => false, 'message' => 'Failed to save uploaded file on server. Check folder permissions.'];
-    }
+    $fileSizeMB = round($file['size'] / (1024 * 1024), 2);
 
     // Determine bucket name
     $bucket = 'pdfs';
@@ -131,17 +128,51 @@ function uploadFile(array $file, string $targetDir, array $allowedExtensions = [
         }
     }
 
-    // If Supabase Storage is configured and file <= 50MB (Supabase Free Tier max is 50MB / 52428800 bytes)
     $supabase = SupabaseService::getInstance();
     $publicUrl = '';
-    $fileSizeMB = round($file['size'] / (1024 * 1024), 2);
+    $supabaseSuccess = false;
 
+    // Detect MIME type safely
+    $mimeType = 'application/octet-stream';
+    if ($ext === 'pdf') {
+        $mimeType = 'application/pdf';
+    } elseif (in_array($ext, ['jpg', 'jpeg'])) {
+        $mimeType = 'image/jpeg';
+    } elseif ($ext === 'png') {
+        $mimeType = 'image/png';
+    } elseif ($ext === 'webp') {
+        $mimeType = 'image/webp';
+    } elseif ($ext === 'svg') {
+        $mimeType = 'image/svg+xml';
+    } elseif (function_exists('mime_content_type') && !empty($file['tmp_name']) && file_exists($file['tmp_name'])) {
+        $detected = @mime_content_type($file['tmp_name']);
+        if ($detected) $mimeType = $detected;
+    }
+
+    // 1. Upload to Supabase Storage (if configured and file size <= 50MB)
     if ($supabase->isConfigured() && $file['size'] <= 52428800) {
-        $mimeType = mime_content_type($targetPath) ?: 'application/octet-stream';
-        $uploadResult = $supabase->uploadToStorage($bucket, $filename, $targetPath, $mimeType);
+        $uploadResult = $supabase->uploadToStorage($bucket, $filename, $file['tmp_name'], $mimeType);
         if ($uploadResult['status']) {
+            $supabaseSuccess = true;
             $publicUrl = $uploadResult['public_url'];
         }
+    }
+
+    // 2. Try saving to local disk if directory is writable (e.g. on XAMPP/VPS)
+    $localSaved = false;
+    if (is_dir($targetDir) && is_writable($targetDir)) {
+        if (@move_uploaded_file($file['tmp_name'], $targetPath) || @copy($file['tmp_name'], $targetPath)) {
+            $localSaved = true;
+        }
+    }
+
+    // If neither Supabase nor local disk succeeded
+    if (!$supabaseSuccess && !$localSaved) {
+        // If Supabase wasn't configured or failed and local disk write failed
+        return [
+            'status' => false,
+            'message' => 'Failed to save file: Supabase Storage upload ' . ($supabase->isConfigured() ? 'failed' : 'not configured') . ' and local directory is not writable.'
+        ];
     }
 
     return [
