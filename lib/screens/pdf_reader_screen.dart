@@ -317,13 +317,14 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
         top: false,
         child: Column(
           children: [
-            // 1. PDF Canvas Viewport centered between AppBar and Bottom Bar
+            // 1. PDF Canvas Viewport - centered in the middle between AppBar and Bottom Bar
             Expanded(
-              child: Center(
-                child: Container(
-                  color: AppColors.canvasBg,
-                  child: _buildBody(),
-                ),
+              child: Container(
+                width: double.infinity,
+                height: double.infinity,
+                alignment: Alignment.center,
+                color: AppColors.canvasBg,
+                child: _buildBody(),
               ),
             ),
 
@@ -340,6 +341,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
       return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             CircularProgressIndicator(color: AppColors.primaryBlue),
             SizedBox(height: 16),
@@ -362,6 +364,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const Icon(
                 Icons.picture_as_pdf_rounded,
@@ -406,35 +409,37 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
       );
     }
 
-    // Centered, Pinch-Zoomable PDF Viewer on App Theme Canvas
-    return Center(
-      child: PdfViewPinch(
-        key: ValueKey('pdf_pinch_${_isHorizontalScroll ? 'h' : 'v'}'),
-        controller: _pdfController!,
-        scrollDirection: _isHorizontalScroll ? Axis.horizontal : Axis.vertical,
-        backgroundDecoration: const BoxDecoration(color: AppColors.canvasBg),
-        onDocumentLoaded: (document) {
-          setState(() {
-            _totalPages = document.pagesCount;
-          });
-        },
-        onPageChanged: (page) {
-          setState(() {
-            _currentPage = page;
-          });
-        },
-        builders: PdfViewPinchBuilders<DefaultBuilderOptions>(
-          options: const DefaultBuilderOptions(
-            loaderSwitchDuration: Duration(milliseconds: 150),
-          ),
-          documentLoaderBuilder: (_) =>
-              const Center(child: CircularProgressIndicator(color: AppColors.primaryBlue)),
-          pageLoaderBuilder: (_) =>
-              const Center(child: CircularProgressIndicator(color: AppColors.primaryBlue)),
-          errorBuilder: (context, error) => Center(
-            child: Text(
-              'Error loading page: $error',
-              style: const TextStyle(color: AppColors.textSecondary),
+    // Perfectly Centered & Middle-aligned PDF Viewport
+    return SizedBox.expand(
+      child: Center(
+        child: PdfViewPinch(
+          key: ValueKey('pdf_pinch_${_isHorizontalScroll ? 'h' : 'v'}'),
+          controller: _pdfController!,
+          scrollDirection: _isHorizontalScroll ? Axis.horizontal : Axis.vertical,
+          backgroundDecoration: const BoxDecoration(color: AppColors.canvasBg),
+          onDocumentLoaded: (document) {
+            setState(() {
+              _totalPages = document.pagesCount;
+            });
+          },
+          onPageChanged: (page) {
+            setState(() {
+              _currentPage = page;
+            });
+          },
+          builders: PdfViewPinchBuilders<DefaultBuilderOptions>(
+            options: const DefaultBuilderOptions(
+              loaderSwitchDuration: Duration(milliseconds: 150),
+            ),
+            documentLoaderBuilder: (_) =>
+                const Center(child: CircularProgressIndicator(color: AppColors.primaryBlue)),
+            pageLoaderBuilder: (_) =>
+                const Center(child: CircularProgressIndicator(color: AppColors.primaryBlue)),
+            errorBuilder: (context, error) => Center(
+              child: Text(
+                'Error loading page: $error',
+                style: const TextStyle(color: AppColors.textSecondary),
+              ),
             ),
           ),
         ),
