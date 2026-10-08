@@ -235,11 +235,11 @@ function url(string $path = ''): string {
 }
 
 // Format Numbers / Bytes
-function formatBytes(int $bytes, int $precision = 2): string {
+function formatBytes(int|float $bytes, int $precision = 2): string {
     $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-    $bytes = max($bytes, 0);
+    $bytes = (float)max($bytes, 0);
     $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
-    $pow = min($pow, count($units) - 1);
+    $pow = min((int)$pow, count($units) - 1);
     $bytes /= pow(1024, $pow);
     return round($bytes, $precision) . ' ' . $units[$pow];
 }

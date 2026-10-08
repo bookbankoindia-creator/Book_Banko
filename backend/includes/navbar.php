@@ -18,22 +18,6 @@
     </div>
 
     <div class="d-flex align-items-center gap-3">
-        <!-- Quick Action: Direct PDF Add Shortcut (Hidden on Education Hierarchy modules) -->
-        <?php 
-        $currentUri = $_SERVER['REQUEST_URI'] ?? '';
-        $isHierarchyPage = (strpos($currentUri, '/modules/boards/') !== false) 
-                        || (strpos($currentUri, '/modules/mediums/') !== false)
-                        || (strpos($currentUri, '/modules/standards/') !== false)
-                        || (strpos($currentUri, '/modules/streams/') !== false)
-                        || (strpos($currentUri, '/modules/chapters/') !== false)
-                        || (!empty($hideUploadPdf));
-        if (!$isHierarchyPage): 
-        ?>
-        <a href="<?= url('modules/chapters/add.php') ?>" class="btn btn-bb-primary btn-sm d-none d-sm-inline-flex align-items-center gap-2">
-            <i class="bi bi-cloud-arrow-up-fill"></i>
-            <span>Upload PDF</span>
-        </a>
-        <?php endif; ?>
 
         <!-- Admin Profile Pill Dropdown -->
         <div class="dropdown">

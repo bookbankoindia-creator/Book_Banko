@@ -149,10 +149,10 @@ include __DIR__ . '/../../includes/header.php';
             </div>
             <div class="row g-3">
                 <div class="col-md-3 col-6">
-                    <a href="<?= url('modules/chapters/add.php') ?>" class="text-decoration-none text-center d-block p-3 rounded-4 bg-light border border-primary-subtle hover-shadow">
-                        <i class="bi bi-cloud-arrow-up-fill fs-2 text-primary d-block mb-2"></i>
-                        <span class="fw-bold text-dark small d-block">Upload PDF</span>
-                        <span class="text-muted" style="font-size: 11px;">Add new chapter</span>
+                    <a href="<?= url('modules/chapters/index.php') ?>" class="text-decoration-none text-center d-block p-3 rounded-4 bg-light border border-primary-subtle hover-shadow">
+                        <i class="bi bi-file-earmark-pdf fs-2 text-primary d-block mb-2"></i>
+                        <span class="fw-bold text-dark small d-block">Manage Chapters</span>
+                        <span class="text-muted" style="font-size: 11px;">View & edit PDFs</span>
                     </a>
                 </div>
                 <div class="col-md-3 col-6">
