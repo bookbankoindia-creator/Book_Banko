@@ -32,6 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $description = trim($_POST['description'] ?? '');
             $pageCount = (int)($_POST['page_count'] ?? 1);
             $externalUrl = trim($_POST['pdf_external_url'] ?? '');
+            $pageLinks = trim($_POST['page_links'] ?? '');
             $displayOrder = (int)($_POST['display_order'] ?? $chapterNumber);
             $status = $_POST['status'] ?? 'active';
 
@@ -63,11 +64,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             INSERT INTO chapters_content (
                                 subject_id, module_id, chapter_number, title, description, 
                                 pdf_file_path, pdf_external_url, page_count, file_size_mb, 
-                                display_order, status
+                                page_links, display_order, status
                             ) VALUES (
                                 :sub, :mod, :chap_num, :title, :desc, 
                                 :file, :url, :pages, :size, 
-                                :order, :status
+                                :links, :order, :status
                             )
                         ");
                         $stmt->execute([
@@ -80,6 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             ':url' => $externalUrl,
                             ':pages' => $pageCount,
                             ':size' => $fileSizeMB,
+                            ':links' => $pageLinks,
                             ':order' => $displayOrder,
                             ':status' => $status
                         ]);
@@ -191,6 +193,14 @@ include __DIR__ . '/../../includes/header.php';
                             <option value="active" selected>Active</option>
                             <option value="inactive">Inactive</option>
                         </select>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label" for="page_links">
+                            <i class="bi bi-link-45deg text-primary me-1"></i>Page-Specific JEE & NEET Question Links (Google Docs / Quizzes)
+                        </label>
+                        <textarea class="form-control font-monospace small" id="page_links" name="page_links" rows="3" placeholder='{"1": "https://docs.google.com/document/d/1KpHDVKmK_OJhktZPq0wOphWFlPFUJE2jIIJCiC_Fz30/edit?tab=t.0", "2": "https://...", "default": "https://..."}'><?= htmlspecialchars($_POST['page_links'] ?? '') ?></textarea>
+                        <div class="form-text">Enter JSON mapping of page numbers to question links (e.g. <code>{"1": "https://docs.google.com/...", "2": "https://..."}</code>) or a default Google Doc link.</div>
                     </div>
 
                     <div class="col-12 mt-4 text-end">

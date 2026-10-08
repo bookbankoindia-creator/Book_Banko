@@ -40,7 +40,7 @@ try {
     $query = "
         SELECT c.id, c.chapter_number, c.title, c.description,
                c.pdf_file_path, c.pdf_external_url, c.page_count, c.file_size_mb,
-               c.is_free, c.views_count, c.display_order,
+               c.is_free, c.views_count, c.display_order, c.page_links,
                m.id as module_id, m.title as module_title, m.slug as module_slug,
                s.name as subject_name, s.code as subject_code
         FROM chapters_content c
@@ -59,7 +59,7 @@ try {
         $fbStmt = $db->prepare("
             SELECT c.id, c.chapter_number, c.title, c.description,
                    c.pdf_file_path, c.pdf_external_url, c.page_count, c.file_size_mb,
-                   c.is_free, c.views_count, c.display_order,
+                   c.is_free, c.views_count, c.display_order, c.page_links,
                    m.id as module_id, m.title as module_title, m.slug as module_slug,
                    s.name as subject_name, s.code as subject_code
             FROM chapters_content c

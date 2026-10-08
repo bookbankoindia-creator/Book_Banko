@@ -381,6 +381,8 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
 
   void _showPageQuestionsSheet(int page, BookBankoAppState appState, ChapterModel chapter) {
     final subject = appState.selectedSubject?.name ?? 'Subject';
+    final targetDocUrl = chapter.getLinkForPage(page) ??
+        'https://docs.google.com/document/d/1KpHDVKmK_OJhktZPq0wOphWFlPFUJE2jIIJCiC_Fz30/edit?tab=t.0';
 
     showModalBottomSheet(
       context: context,
@@ -413,7 +415,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
                     color: AppColors.primaryBlue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.quiz_rounded, color: AppColors.primaryBlue, size: 24),
+                  child: const Icon(Icons.description_rounded, color: AppColors.primaryBlue, size: 24),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -421,7 +423,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Page $page Questions & Tests',
+                        'Page $page JEE & NEET Questions',
                         style: const TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
@@ -443,17 +445,38 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
               ],
             ),
             const SizedBox(height: 18),
+            // 1. Google Document Question Link (Primary Option)
+            _buildQuestionOption(
+              icon: Icons.article_rounded,
+              color: const Color(0xFF1D4ED8),
+              title: 'Open Page $page Question Google Doc',
+              subtitle: 'View curated JEE & NEET questions document',
+              onTap: () async {
+                Navigator.pop(ctx);
+                final uri = Uri.tryParse(targetDocUrl);
+                if (uri != null) {
+                  try {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  } catch (e) {
+                    debugPrint('Error launching Google Doc URL: $e');
+                  }
+                }
+              },
+            ),
+            const SizedBox(height: 10),
+            // 2. In-App JEE Questions
             _buildQuestionOption(
               icon: Icons.science_rounded,
               color: const Color(0xFF0284C7),
-              title: 'JEE Main & Advanced Questions',
-              subtitle: 'Physics, Chemistry & Maths problems for Page $page',
+              title: 'JEE Main & Advanced Test Questions',
+              subtitle: 'Physics, Chemistry & Maths practice for Page $page',
               onTap: () {
                 Navigator.pop(ctx);
                 Navigator.pushNamed(context, '/competitive_exams', arguments: {'exam': 'jee', 'page': page});
               },
             ),
             const SizedBox(height: 10),
+            // 3. In-App NEET Questions
             _buildQuestionOption(
               icon: Icons.medication_rounded,
               color: const Color(0xFF059669),
@@ -462,17 +485,6 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
               onTap: () {
                 Navigator.pop(ctx);
                 Navigator.pushNamed(context, '/competitive_exams', arguments: {'exam': 'neet', 'page': page});
-              },
-            ),
-            const SizedBox(height: 10),
-            _buildQuestionOption(
-              icon: Icons.menu_book_rounded,
-              color: const Color(0xFFD97706),
-              title: 'Board Exam & Extra Practice',
-              subtitle: 'Important questions & chapter summary for Page $page',
-              onTap: () {
-                Navigator.pop(ctx);
-                Navigator.pushNamed(context, '/extra_material');
               },
             ),
             const SizedBox(height: 12),

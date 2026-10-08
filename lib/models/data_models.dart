@@ -254,6 +254,7 @@ class ChapterModel {
   final String title;
   final String pdfUrl;
   final int pageCount;
+  final dynamic pageLinks;
 
   const ChapterModel({
     this.id = 0,
@@ -261,6 +262,7 @@ class ChapterModel {
     required this.title,
     required this.pdfUrl,
     this.pageCount = 34,
+    this.pageLinks,
   });
 
   factory ChapterModel.fromJson(Map<String, dynamic> json) {
@@ -270,7 +272,34 @@ class ChapterModel {
       title: json['title']?.toString() ?? '',
       pdfUrl: json['full_pdf_url']?.toString() ?? json['pdf_file_path']?.toString() ?? '',
       pageCount: int.tryParse(json['page_count']?.toString() ?? '30') ?? 30,
+      pageLinks: json['page_links'],
     );
+  }
+
+  String? getLinkForPage(int pageNumber) {
+    if (pageLinks == null) return null;
+    if (pageLinks is Map) {
+      final key = pageNumber.toString();
+      if (pageLinks.containsKey(key) && pageLinks[key] != null && pageLinks[key].toString().trim().isNotEmpty) {
+        return pageLinks[key].toString().trim();
+      }
+      if (pageLinks.containsKey('default') && pageLinks['default'] != null && pageLinks['default'].toString().trim().isNotEmpty) {
+        return pageLinks['default'].toString().trim();
+      }
+    } else if (pageLinks is String && pageLinks.toString().trim().isNotEmpty) {
+      final str = pageLinks.toString().trim();
+      if (str.startsWith('{') && str.endsWith('}')) {
+        // Try parsing JSON map
+        final keyPattern = '"$pageNumber"\\s*:\\s*"([^"]+)"';
+        final match = RegExp(keyPattern).firstMatch(str);
+        if (match != null && match.group(1) != null) {
+          return match.group(1);
+        }
+      } else if (str.startsWith('http://') || str.startsWith('https://')) {
+        return str;
+      }
+    }
+    return null;
   }
 
   static const List<ChapterModel> mathChapters = [

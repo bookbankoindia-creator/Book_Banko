@@ -28,6 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $description = trim($_POST['description'] ?? '');
             $pageCount = (int)($_POST['page_count'] ?? 1);
             $externalUrl = trim($_POST['pdf_external_url'] ?? '');
+            $pageLinks = trim($_POST['page_links'] ?? '');
             $displayOrder = (int)($_POST['display_order'] ?? 1);
             $status = $_POST['status'] ?? 'active';
 
@@ -67,9 +68,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     $stmt = $db->prepare("
                         INSERT INTO competitive_exam_materials
-                        (exam_id, exam_name, subject_name, title, material_type, description, pdf_file_path, pdf_external_url, page_count, file_size_mb, is_free, display_order, status)
+                        (exam_id, exam_name, subject_name, title, material_type, description, pdf_file_path, pdf_external_url, page_count, file_size_mb, page_links, is_free, display_order, status)
                         VALUES
-                        (:exam_id, :exam_name, :sub_name, :title, :mat_type, :description, :pdf_file, :ext_url, :page_count, :file_size, true, :display_order, :status)
+                        (:exam_id, :exam_name, :sub_name, :title, :mat_type, :description, :pdf_file, :ext_url, :page_count, :file_size, :links, true, :display_order, :status)
                     ");
                     $stmt->execute([
                         ':exam_id' => $examId,
@@ -82,6 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ':ext_url' => $externalUrl,
                         ':page_count' => $pageCount,
                         ':file_size' => $fileSizeMB,
+                        ':links' => $pageLinks,
                         ':display_order' => $displayOrder,
                         ':status' => $status,
                     ]);
@@ -201,6 +203,14 @@ include __DIR__ . '/../../includes/header.php';
                                 <option value="active" <?= ($_POST['status'] ?? 'active') === 'active' ? 'selected' : '' ?>>Active (Visible)</option>
                                 <option value="inactive" <?= ($_POST['status'] ?? '') === 'inactive' ? 'selected' : '' ?>>Inactive (Hidden)</option>
                             </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-bold small text-dark">
+                                <i class="bi bi-link-45deg text-primary me-1"></i>Page-Specific JEE & NEET Question Links (Google Docs / Quizzes)
+                            </label>
+                            <textarea class="form-control font-monospace small" name="page_links" rows="3" placeholder='{"1": "https://docs.google.com/document/d/1KpHDVKmK_OJhktZPq0wOphWFlPFUJE2jIIJCiC_Fz30/edit?tab=t.0", "2": "https://...", "default": "https://..."}'><?= htmlspecialchars($_POST['page_links'] ?? '') ?></textarea>
+                            <div class="form-text">Enter JSON mapping of page numbers to question links (e.g. <code>{"1": "https://docs.google.com/...", "2": "https://..."}</code>) or a default Google Doc link.</div>
                         </div>
                     </div>
                 </div>
