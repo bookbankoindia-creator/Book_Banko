@@ -1,14 +1,13 @@
-import 'package:book_banko/config/app_config.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:pdfx/pdfx.dart';
 import 'package:provider/provider.dart';
 
+import '../config/app_config.dart';
 import '../models/app_state.dart';
 import '../models/data_models.dart';
 import '../services/api_services.dart';
-import '../theme/app_theme.dart';
 
 class PdfReaderScreen extends StatefulWidget {
   const PdfReaderScreen({super.key});
@@ -24,7 +23,11 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
   int _currentPage = 1;
   int _totalPages = 0;
   String _currentLoadedUrl = '';
-  bool _isHorizontalScroll = true; // Horizontal book-flip mode by default
+  bool _isHorizontalScroll = true; // Horizontal book-flip mode matching the reference design
+
+  // Theme golden yellow color from user's reference design
+  static const Color headerGolden = Color(0xFFFBBF24);
+  static const Color bottomBarGolden = Color(0xFFFBBF24);
 
   @override
   void didChangeDependencies() {
@@ -38,24 +41,6 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
     }
   }
 
-  void _toggleScrollDirection() {
-    setState(() {
-      _isHorizontalScroll = !_isHorizontalScroll;
-    });
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          _isHorizontalScroll
-              ? 'Switched to Horizontal (Book Flip) Mode'
-              : 'Switched to Vertical (Continuous Scroll) Mode',
-        ),
-        duration: const Duration(seconds: 1),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
   void _showJumpToPageDialog() {
     if (_totalPages <= 1) return;
     final textController = TextEditingController(text: '$_currentPage');
@@ -63,27 +48,44 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
-            Icon(Icons.menu_book_rounded, color: AppColors.primaryBlue),
+            Icon(Icons.edit, color: Colors.black87),
             SizedBox(width: 8),
-            Text('Go to Page', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(
+              'Go to Page',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Enter page number between 1 and $_totalPages:'),
+            Text(
+              'Enter page number (1 - $_totalPages):',
+              style: const TextStyle(fontSize: 14, color: Colors.black87),
+            ),
             const SizedBox(height: 12),
             TextField(
               controller: textController,
               keyboardType: TextInputType.number,
               autofocus: true,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               decoration: InputDecoration(
                 hintText: 'e.g. 15',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                filled: true,
+                fillColor: const Color(0xFFF8FAFC),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                ),
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               ),
             ),
@@ -92,7 +94,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -101,27 +103,137 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
                 Navigator.pop(ctx);
                 _pdfController?.animateToPage(
                   pageNumber: page,
-                  duration: const Duration(milliseconds: 300),
+                  duration: const Duration(milliseconds: 250),
                   curve: Curves.easeInOut,
                 );
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryBlue,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              backgroundColor: headerGolden,
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Text('Go'),
+            child: const Text('Go', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
     );
   }
 
+  void _showInfoDialog(BookBankoAppState appState, ChapterModel chapter) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: headerGolden.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.info_outline_rounded, color: Colors.black87),
+            ),
+            const SizedBox(width: 10),
+            const Text(
+              'Chapter Details',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildInfoRow('Chapter:', chapter.title),
+            const SizedBox(height: 8),
+            _buildInfoRow('Subject:', appState.selectedSubject?.name ?? 'General Science'),
+            const SizedBox(height: 8),
+            _buildInfoRow('Board & Std:', '${appState.selectedBoard} • Std ${appState.activeStandardNumber}'),
+            const SizedBox(height: 8),
+            _buildInfoRow('Total Pages:', '$_totalPages Pages'),
+            const Divider(height: 24),
+            // JEE & NEET Practice banner
+            InkWell(
+              onTap: () {
+                Navigator.pop(ctx);
+                Navigator.pushNamed(context, '/competitive_exams');
+              },
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFFDE68A)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.workspace_premium_rounded, color: Color(0xFFD97706), size: 24),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'JEE & NEET Questions',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF92400E)),
+                          ),
+                          Text(
+                            'Click here for competitive practice sets',
+                            style: TextStyle(fontSize: 11, color: Color(0xFFB45309)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFFD97706)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: headerGolden,
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Close', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 90,
+          child: Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.black54, fontSize: 13),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.black87, fontSize: 13),
+          ),
+        ),
+      ],
+    );
+  }
+
   String _normalizePdfUrl(String rawUrl) {
     if (rawUrl.isEmpty) return rawUrl;
 
-    // If it's already a public cloud URL (e.g. Supabase Storage CDN)
     if (rawUrl.contains('supabase.co')) {
       return rawUrl;
     }
@@ -129,7 +241,6 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
     final activeBase = ApiService.baseUrl;
     final backendRoot = activeBase.replaceAll('/api', '');
 
-    // Replace any local backend URLs with the active production backend root
     if (rawUrl.contains('localhost/Book_Banko/backend')) {
       return rawUrl.replaceAll('http://localhost/Book_Banko/backend', backendRoot);
     }
@@ -160,32 +271,24 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
       Uint8List? pdfBytes;
       final normalizedUrl = _normalizePdfUrl(url);
 
-      if (normalizedUrl.startsWith('http://') ||
-          normalizedUrl.startsWith('https://')) {
+      if (normalizedUrl.startsWith('http://') || normalizedUrl.startsWith('https://')) {
         try {
-          final response = await http
-              .get(Uri.parse(normalizedUrl))
-              .timeout(const Duration(seconds: 120));
+          final response = await http.get(Uri.parse(normalizedUrl)).timeout(const Duration(seconds: 120));
           if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
             pdfBytes = response.bodyBytes;
-          } else {
-            debugPrint('Primary PDF request returned HTTP ${response.statusCode}');
           }
         } catch (e) {
-          debugPrint('Primary PDF download failed: $e');
+          debugPrint('Primary PDF download error: $e');
         }
       }
 
-      // Fallback 1: Supabase CDN
+      // Fallback 1: Direct Supabase public CDN URL
       if (pdfBytes == null && !normalizedUrl.contains('supabase.co')) {
         final filename = url.split('/').last.split('?').first;
         if (filename.isNotEmpty) {
-          final cdnUrl =
-              '${AppConfig.supabaseUrl}/storage/v1/object/public/pdfs/$filename';
+          final cdnUrl = '${AppConfig.supabaseUrl}/storage/v1/object/public/pdfs/$filename';
           try {
-            final res = await http
-                .get(Uri.parse(cdnUrl))
-                .timeout(const Duration(seconds: 60));
+            final res = await http.get(Uri.parse(cdnUrl)).timeout(const Duration(seconds: 60));
             if (res.statusCode == 200 && res.bodyBytes.isNotEmpty) {
               pdfBytes = res.bodyBytes;
             }
@@ -193,28 +296,22 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
         }
       }
 
-      // Fallback 2: Local backend host
+      // Fallback 2: Serverless uploads URL
       if (pdfBytes == null) {
         final filename = url.split('/').last.split('?').first;
-        final fallbackUrl = _normalizePdfUrl(
-          '${ApiService.baseUrl.replaceAll('/api', '')}/uploads/pdfs/$filename',
-        );
+        final fallbackUrl = _normalizePdfUrl('${ApiService.baseUrl.replaceAll('/api', '')}/uploads/pdfs/$filename');
         try {
-          final res = await http
-              .get(Uri.parse(fallbackUrl))
-              .timeout(const Duration(seconds: 120));
+          final res = await http.get(Uri.parse(fallbackUrl)).timeout(const Duration(seconds: 120));
           if (res.statusCode == 200 && res.bodyBytes.isNotEmpty) {
             pdfBytes = res.bodyBytes;
           }
         } catch (e) {
-          debugPrint('Local backend PDF fallback failed: $e');
+          debugPrint('Fallback PDF download error: $e');
         }
       }
 
       if (pdfBytes == null || pdfBytes.isEmpty) {
-        throw Exception(
-          'Could not connect to PDF server. Please check your network connection.',
-        );
+        throw Exception('Could not connect to PDF cloud server. Please check your internet connection.');
       }
 
       final document = await PdfDocument.openData(pdfBytes);
@@ -249,58 +346,72 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
   Widget build(BuildContext context) {
     final appState = Provider.of<BookBankoAppState>(context);
     final chapter = appState.selectedChapter ?? ChapterModel.mathChapters[0];
+    final subject = appState.selectedSubject;
+    final subjectTitle = subject?.name.isNotEmpty == true ? subject!.name : chapter.title;
+    final standardText = appState.activeStandardNumber > 0 ? 'ધોરણ – ${appState.activeStandardNumber}' : 'ધોરણ – 10';
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1E242E), // Sleek reader dark background
+      backgroundColor: Colors.white, // Pure white background matching reference image
       appBar: AppBar(
-        title: Text(
-          chapter.title,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        centerTitle: false,
-        backgroundColor: AppColors.primaryBlue,
+        backgroundColor: headerGolden, // Golden Yellow matching reference image
         elevation: 0,
+        centerTitle: false,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: Colors.white,
-            size: 20,
-          ),
+          icon: const Icon(Icons.arrow_back, color: Colors.black, size: 24),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          // Jump to Page Button
-          if (!_isLoading && _totalPages > 0)
-            IconButton(
-              icon: const Icon(Icons.pin_invoke_rounded, color: Colors.white, size: 22),
-              tooltip: 'Go to Page',
-              onPressed: _showJumpToPageDialog,
-            ),
-          // Scroll Direction Mode Toggle (Horizontal / Vertical)
-          if (!_isLoading && _totalPages > 0)
-            IconButton(
-              icon: Icon(
-                _isHorizontalScroll ? Icons.swap_vert_rounded : Icons.swap_horiz_rounded,
-                color: Colors.white,
-                size: 24,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              subjectTitle,
+              style: const TextStyle(
+                color: Colors.black,
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.2,
               ),
-              tooltip: _isHorizontalScroll
-                  ? 'Switch to Vertical Continuous Scroll'
-                  : 'Switch to Horizontal Book Flip',
-              onPressed: _toggleScrollDirection,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-          const SizedBox(width: 6),
+            const SizedBox(height: 1),
+            Text(
+              standardText,
+              style: const TextStyle(
+                color: Colors.black87,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          // Info Details Dialog Button
+          IconButton(
+            icon: const Icon(Icons.info_outline_rounded, color: Colors.black, size: 24),
+            tooltip: 'Chapter Details',
+            onPressed: () => _showInfoDialog(appState, chapter),
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: SafeArea(
-        bottom: false,
-        child: _buildBody(),
+        top: false,
+        child: Column(
+          children: [
+            // 1. PDF Canvas Viewport (Edge-to-edge white background without dark margins)
+            Expanded(
+              child: Container(
+                color: Colors.white,
+                child: _buildBody(),
+              ),
+            ),
+
+            // 2. Fixed Bottom Navigation Bar matching reference design
+            _buildBottomNavigationBar(),
+          ],
+        ),
       ),
     );
   }
@@ -311,14 +422,14 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: const [
-            CircularProgressIndicator(color: Colors.white),
+            CircularProgressIndicator(color: headerGolden),
             SizedBox(height: 16),
             Text(
               'Loading PDF Document...',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: Colors.white70,
+                color: Colors.black54,
               ),
             ),
           ],
@@ -336,7 +447,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
               const Icon(
                 Icons.picture_as_pdf_rounded,
                 size: 64,
-                color: AppColors.error,
+                color: Colors.redAccent,
               ),
               const SizedBox(height: 16),
               const Text(
@@ -344,7 +455,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: Colors.black87,
                 ),
               ),
               const SizedBox(height: 8),
@@ -352,7 +463,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
                 _errorMessage ?? 'Unable to render the uploaded PDF file.',
                 style: const TextStyle(
                   fontSize: 13,
-                  color: Colors.white70,
+                  color: Colors.black54,
                 ),
                 textAlign: TextAlign.center,
               ),
@@ -362,14 +473,11 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
                 icon: const Icon(Icons.refresh),
                 label: const Text('Try Again'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryBlue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
+                  backgroundColor: headerGolden,
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
               ),
@@ -379,203 +487,130 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
       );
     }
 
-    return Stack(
-      children: [
-        // Pinch-Zoomable, Aspect-Ratio-Preserving PDF Viewer (Full Page View without any cropping)
-        Positioned.fill(
-          child: PdfViewPinch(
-            key: ValueKey('pdf_pinch_${_isHorizontalScroll ? 'h' : 'v'}'),
-            controller: _pdfController!,
-            scrollDirection: _isHorizontalScroll ? Axis.horizontal : Axis.vertical,
-            onDocumentLoaded: (document) {
-              setState(() {
-                _totalPages = document.pagesCount;
-              });
-            },
-            onPageChanged: (page) {
-              setState(() {
-                _currentPage = page;
-              });
-            },
-            builders: PdfViewPinchBuilders<DefaultBuilderOptions>(
-              options: const DefaultBuilderOptions(
-                loaderSwitchDuration: Duration(milliseconds: 200),
-              ),
-              documentLoaderBuilder: (_) => const Center(
-                child: CircularProgressIndicator(color: Colors.white),
-              ),
-              pageLoaderBuilder: (_) => const Center(
-                child: CircularProgressIndicator(color: Colors.white),
-              ),
-              errorBuilder: (context, error) => Center(
+    // Pinch-Zoomable, aspect-ratio-preserving PDF Viewer on seamless white canvas
+    return PdfViewPinch(
+      key: ValueKey('pdf_pinch_${_isHorizontalScroll ? 'h' : 'v'}'),
+      controller: _pdfController!,
+      scrollDirection: _isHorizontalScroll ? Axis.horizontal : Axis.vertical,
+      backgroundDecoration: const BoxDecoration(
+        color: Colors.white,
+      ),
+      onDocumentLoaded: (document) {
+        setState(() {
+          _totalPages = document.pagesCount;
+        });
+      },
+      onPageChanged: (page) {
+        setState(() {
+          _currentPage = page;
+        });
+      },
+      builders: PdfViewPinchBuilders<DefaultBuilderOptions>(
+        options: const DefaultBuilderOptions(
+          loaderSwitchDuration: Duration(milliseconds: 150),
+        ),
+        documentLoaderBuilder: (_) => const Center(
+          child: CircularProgressIndicator(color: headerGolden),
+        ),
+        pageLoaderBuilder: (_) => const Center(
+          child: CircularProgressIndicator(color: headerGolden),
+        ),
+        errorBuilder: (context, error) => Center(
+          child: Text(
+            'Error loading page: $error',
+            style: const TextStyle(color: Colors.black54),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomNavigationBar() {
+    return Container(
+      height: 58,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: const BoxDecoration(
+        color: bottomBarGolden,
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x1A000000),
+            blurRadius: 4,
+            offset: Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Left: Page Count Indicator (e.g. 1 / 173) + Edit icon
+          Row(
+            children: [
+              GestureDetector(
+                onTap: _showJumpToPageDialog,
                 child: Text(
-                  'Error loading page: $error',
-                  style: const TextStyle(color: Colors.white70),
-                ),
-              ),
-            ),
-          ),
-        ),
-
-        // Floating Bottom HUD Indicator (Page X of Y • Tap to jump)
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 24,
-          child: Center(
-            child: GestureDetector(
-              onTap: _showJumpToPageDialog,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.75),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      _isHorizontalScroll
-                          ? Icons.swap_horiz_rounded
-                          : Icons.swap_vert_rounded,
-                      size: 16,
-                      color: const Color(0xFF60A5FA),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Page $_currentPage of $_totalPages',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryBlue,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Text(
-                        'Jump',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-
-        // Left Floating Navigation Arrow (<) - Quick Page Turn in Horizontal Mode
-        if (_isHorizontalScroll && _currentPage > 1)
-          Positioned(
-            left: 12,
-            top: 0,
-            bottom: 0,
-            child: Center(
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    _pdfController?.previousPage(
-                      curve: Curves.easeInOut,
-                      duration: const Duration(milliseconds: 250),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(24),
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.black.withValues(alpha: 0.65),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.25),
-                        width: 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.25),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.chevron_left_rounded,
-                      size: 30,
-                      color: Colors.white,
-                    ),
+                  '$_currentPage / ${_totalPages > 0 ? _totalPages : 1}',
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.black,
                   ),
                 ),
               ),
-            ),
+              const SizedBox(width: 14),
+              IconButton(
+                icon: const Icon(Icons.edit, color: Colors.black, size: 22),
+                tooltip: 'Go to Page',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                onPressed: _showJumpToPageDialog,
+              ),
+            ],
           ),
 
-        // Right Floating Navigation Arrow (>) - Quick Page Turn in Horizontal Mode
-        if (_isHorizontalScroll && _currentPage < _totalPages)
-          Positioned(
-            right: 12,
-            top: 0,
-            bottom: 0,
-            child: Center(
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    _pdfController?.nextPage(
-                      curve: Curves.easeInOut,
-                      duration: const Duration(milliseconds: 250),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(24),
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.primaryBlue.withValues(alpha: 0.9),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.3),
-                        width: 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.primaryBlue.withValues(alpha: 0.4),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.chevron_right_rounded,
-                      size: 30,
-                      color: Colors.white,
-                    ),
-                  ),
+          // Right: Previous (<) and Next (>) Page Navigation buttons
+          Row(
+            children: [
+              IconButton(
+                icon: Icon(
+                  Icons.chevron_left_rounded,
+                  color: _currentPage > 1 ? Colors.black : Colors.black26,
+                  size: 38,
                 ),
+                tooltip: 'Previous Page',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                onPressed: _currentPage > 1
+                    ? () {
+                        _pdfController?.previousPage(
+                          curve: Curves.easeInOut,
+                          duration: const Duration(milliseconds: 200),
+                        );
+                      }
+                    : null,
               ),
-            ),
+              const SizedBox(width: 16),
+              IconButton(
+                icon: Icon(
+                  Icons.chevron_right_rounded,
+                  color: _currentPage < _totalPages ? Colors.black : Colors.black26,
+                  size: 38,
+                ),
+                tooltip: 'Next Page',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                onPressed: _currentPage < _totalPages
+                    ? () {
+                        _pdfController?.nextPage(
+                          curve: Curves.easeInOut,
+                          duration: const Duration(milliseconds: 200),
+                        );
+                      }
+                    : null,
+              ),
+            ],
           ),
-      ],
+        ],
+      ),
     );
   }
 }
