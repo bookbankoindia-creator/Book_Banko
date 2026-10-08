@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -188,8 +187,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
     try {
       final document = sf_pdf.PdfDocument(inputBytes: rawBytes);
 
-      // Flatten all annotations on every page so watermarks and annotations
-      // become integral rasterized vectors of the page itself.
+      // Flatten annotations on every page so visual elements & layers render accurately
       for (int i = 0; i < document.pages.count; i++) {
         final page = document.pages[i];
         try {
@@ -271,7 +269,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
         );
       }
 
-      // Flatten the PDF so all annotations, layers, and watermarks render accurately
+      // Flatten the PDF so all annotations, layers, and embedded watermarks render accurately
       final processedBytes = await _flattenPdf(downloadedBytes);
 
       if (!mounted) return;
@@ -347,303 +345,21 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
       ),
       body: Column(
         children: [
-          // 1. PDF Canvas Viewport with upper & lower gap margins + Watermark & JEE/NEET link
+          // 1. Centered PDF Viewport with upper & lower gap margins
           Expanded(
             child: Container(
               width: double.infinity,
               height: double.infinity,
               color: AppColors.canvasBg,
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Layer 1: Flattened Syncfusion PDF Viewer
-                  _buildPdfView(),
-
-                  // Layer 2: Book Banko Diagonal Watermark
-                  if (!_isLoading && _errorMessage == null)
-                    _buildWatermarkOverlay(),
-
-                  // Layer 3: Interactive Page-specific JEE & NEET Questions Link
-                  if (!_isLoading && _errorMessage == null)
-                    _buildJeeNeetLinkBanner(appState, chapter),
-                ],
-              ),
+              alignment: Alignment.center,
+              child: _buildPdfView(),
             ),
           ),
 
           // 2. Fixed Bottom Navigation Bar in App Theme Color
           _buildBottomNavigationBar(),
         ],
-      ),
-    );
-  }
-
-  void _showPageQuestionsSheet(int page, BookBankoAppState appState, ChapterModel chapter) {
-    final subject = appState.selectedSubject?.name ?? 'Subject';
-    final targetDocUrl = chapter.getLinkForPage(page) ??
-        'https://docs.google.com/document/d/1KpHDVKmK_OJhktZPq0wOphWFlPFUJE2jIIJCiC_Fz30/edit?tab=t.0';
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryBlue.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(Icons.description_rounded, color: AppColors.primaryBlue, size: 24),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Page $page JEE & NEET Questions',
-                        style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      Text(
-                        '$subject • ${chapter.title}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 18),
-            // 1. Google Document Question Link (Primary Option)
-            _buildQuestionOption(
-              icon: Icons.article_rounded,
-              color: const Color(0xFF1D4ED8),
-              title: 'Open Page $page Question Google Doc',
-              subtitle: 'View curated JEE & NEET questions document',
-              onTap: () async {
-                Navigator.pop(ctx);
-                final uri = Uri.tryParse(targetDocUrl);
-                if (uri != null) {
-                  try {
-                    await launchUrl(uri, mode: LaunchMode.externalApplication);
-                  } catch (e) {
-                    debugPrint('Error launching Google Doc URL: $e');
-                  }
-                }
-              },
-            ),
-            const SizedBox(height: 10),
-            // 2. In-App JEE Questions
-            _buildQuestionOption(
-              icon: Icons.science_rounded,
-              color: const Color(0xFF0284C7),
-              title: 'JEE Main & Advanced Test Questions',
-              subtitle: 'Physics, Chemistry & Maths practice for Page $page',
-              onTap: () {
-                Navigator.pop(ctx);
-                Navigator.pushNamed(context, '/competitive_exams', arguments: {'exam': 'jee', 'page': page});
-              },
-            ),
-            const SizedBox(height: 10),
-            // 3. In-App NEET Questions
-            _buildQuestionOption(
-              icon: Icons.medication_rounded,
-              color: const Color(0xFF059669),
-              title: 'NEET Practice MCQs',
-              subtitle: 'Biology, Physics & Chemistry MCQs for Page $page',
-              onTap: () {
-                Navigator.pop(ctx);
-                Navigator.pushNamed(context, '/competitive_exams', arguments: {'exam': 'neet', 'page': page});
-              },
-            ),
-            const SizedBox(height: 12),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuestionOption({
-    required IconData icon,
-    required Color color,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, color: color, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textPrimary),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.black38),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWatermarkOverlay() {
-    return Positioned.fill(
-      child: IgnorePointer(
-        child: Center(
-          child: Transform.rotate(
-            angle: -math.pi / 6, // -30 degrees diagonal
-            child: Opacity(
-              opacity: 0.12, // Subtle watermark opacity
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'BOOK BANKO',
-                    style: TextStyle(
-                      fontSize: 42,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 4,
-                      color: AppColors.darkNavy,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'બુક બેન્કો • www.bookbanko.in',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.5,
-                      color: AppColors.darkNavy,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildJeeNeetLinkBanner(BookBankoAppState appState, ChapterModel chapter) {
-    return Positioned(
-      bottom: 8,
-      left: 12,
-      right: 12,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _showPageQuestionsSheet(_currentPage, appState, chapter),
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF0061A4), Color(0xFF2196F3)],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              ),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x330061A4),
-                  blurRadius: 8,
-                  offset: Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.stars_rounded,
-                  color: Color(0xFFFFD54F),
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    '👉 Page $_currentPage: Click for JEE & NEET Questions',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      decoration: TextDecoration.underline,
-                      decorationColor: Colors.white,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                const Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  color: Colors.white,
-                  size: 13,
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -724,7 +440,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
       );
     }
 
-    // Syncfusion Flutter PDF Viewer on flattened PDF bytes with full hyperlink support
+    // Pure Syncfusion Flutter PDF Viewer: renders the PDF page and all hyperlinks embedded inside the PDF
     return Center(
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
