@@ -1,9 +1,9 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
+import 'package:pdfx/pdfx.dart';
 import 'package:provider/provider.dart';
-import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../config/app_config.dart';
 import '../models/app_state.dart';
@@ -19,19 +19,13 @@ class PdfReaderScreen extends StatefulWidget {
 }
 
 class _PdfReaderScreenState extends State<PdfReaderScreen> {
-  late PdfViewerController _pdfViewerController;
-  Uint8List? _pdfBytes;
+  PdfControllerPinch? _pdfController;
   bool _isLoading = true;
   String? _errorMessage;
   int _currentPage = 1;
   int _totalPages = 0;
   String _currentLoadedUrl = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _pdfViewerController = PdfViewerController();
-  }
+  final bool _isHorizontalScroll = true;
 
   @override
   void didChangeDependencies() {
@@ -125,7 +119,11 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
               final page = int.tryParse(textController.text.trim());
               if (page != null && page >= 1 && page <= _totalPages) {
                 Navigator.pop(ctx);
-                _pdfViewerController.jumpToPage(page);
+                _pdfController?.animateToPage(
+                  pageNumber: page,
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOut,
+                );
               }
             },
             style: ElevatedButton.styleFrom(
@@ -189,6 +187,11 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
     });
 
     try {
+      if (_pdfController != null) {
+        _pdfController!.dispose();
+        _pdfController = null;
+      }
+
       Uint8List? pdfBytes;
       final normalizedUrl = _normalizePdfUrl(url);
 
@@ -247,10 +250,16 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
         );
       }
 
+      final document = await PdfDocument.openData(pdfBytes);
       if (!mounted) return;
 
+      _pdfController = PdfControllerPinch(
+        document: Future.value(document),
+        initialPage: 1,
+      );
+
       setState(() {
-        _pdfBytes = pdfBytes;
+        _totalPages = document.pagesCount;
         _currentPage = 1;
         _isLoading = false;
       });
@@ -265,7 +274,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
 
   @override
   void dispose() {
-    _pdfViewerController.dispose();
+    _pdfController?.dispose();
     super.dispose();
   }
 
@@ -320,15 +329,28 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
       ),
       body: Column(
         children: [
-          // 1. PDF Canvas Viewport with upper & lower gap margins matching reference image
+          // 1. PDF Canvas Viewport with upper & lower gap margins + Watermark & JEE/NEET link
           Expanded(
             child: Container(
               width: double.infinity,
               height: double.infinity,
               color: AppColors.canvasBg,
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-              alignment: Alignment.center,
-              child: _buildBody(),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Layer 1: PDF Viewer
+                  _buildPdfView(),
+
+                  // Layer 2: Book Banko Diagonal Watermark
+                  if (!_isLoading && _errorMessage == null)
+                    _buildWatermarkOverlay(),
+
+                  // Layer 3: Interactive "Click here for best JEE & NEET Questions" Link
+                  if (!_isLoading && _errorMessage == null)
+                    _buildJeeNeetLinkBanner(),
+                ],
+              ),
             ),
           ),
 
@@ -339,7 +361,112 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildWatermarkOverlay() {
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: Center(
+          child: Transform.rotate(
+            angle: -math.pi / 6, // -30 degrees diagonal
+            child: Opacity(
+              opacity: 0.12, // Subtle watermark opacity
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'BOOK BANKO',
+                    style: TextStyle(
+                      fontSize: 42,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 4,
+                      color: AppColors.darkNavy,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'બુક બેન્કો • www.bookbanko.in',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.5,
+                      color: AppColors.darkNavy,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildJeeNeetLinkBanner() {
+    return Positioned(
+      bottom: 8,
+      left: 12,
+      right: 12,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            Navigator.pushNamed(context, '/competitive_exams');
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0061A4), Color(0xFF2196F3)],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x330061A4),
+                  blurRadius: 8,
+                  offset: Offset(0, 3),
+                ),
+              ],
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.stars_rounded,
+                  color: Color(0xFFFFD54F),
+                  size: 20,
+                ),
+                SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    '👉 Click here for the best JEE & NEET Questions',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      decoration: TextDecoration.underline,
+                      decorationColor: Colors.white,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                SizedBox(width: 6),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: Colors.white,
+                  size: 13,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPdfView() {
     if (_isLoading) {
       return const Center(
         child: Column(
@@ -361,7 +488,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
       );
     }
 
-    if (_errorMessage != null || _pdfBytes == null) {
+    if (_errorMessage != null || _pdfController == null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -415,42 +542,47 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
       );
     }
 
-    // Syncfusion PDF Viewer - renders all watermarks, link annotations, layers, and transparent overlays
-    return Center(
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: SfPdfViewer.memory(
-          _pdfBytes!,
-          controller: _pdfViewerController,
-          enableDoubleTapZooming: true,
-          pageSpacing: 8,
-          canShowScrollHead: false,
-          canShowScrollStatus: false,
-          canShowPaginationDialog: false,
-          canShowHyperlinkDialog: false,
-          enableHyperlinkNavigation: true,
-          pageLayoutMode: PdfPageLayoutMode.single,
-          scrollDirection: PdfScrollDirection.horizontal,
-          onDocumentLoaded: (PdfDocumentLoadedDetails details) {
-            setState(() {
-              _totalPages = details.document.pages.count;
-            });
-          },
-          onPageChanged: (PdfPageChangedDetails details) {
-            setState(() {
-              _currentPage = details.newPageNumber;
-            });
-          },
-          onHyperlinkClicked: (PdfHyperlinkClickedDetails details) async {
-            final uri = Uri.tryParse(details.uri);
-            if (uri != null) {
-              try {
-                await launchUrl(uri, mode: LaunchMode.externalApplication);
-              } catch (e) {
-                debugPrint('Hyperlink launch error: $e');
-              }
-            }
-          },
+    return SizedBox.expand(
+      child: Center(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(6),
+          child: PdfViewPinch(
+            key: ValueKey('pdf_pinch_${_isHorizontalScroll ? 'h' : 'v'}'),
+            controller: _pdfController!,
+            scrollDirection:
+                _isHorizontalScroll ? Axis.horizontal : Axis.vertical,
+            backgroundDecoration:
+                const BoxDecoration(color: AppColors.canvasBg),
+            onDocumentLoaded: (document) {
+              setState(() {
+                _totalPages = document.pagesCount;
+              });
+            },
+            onPageChanged: (page) {
+              setState(() {
+                _currentPage = page;
+              });
+            },
+            builders: PdfViewPinchBuilders<DefaultBuilderOptions>(
+              options: const DefaultBuilderOptions(
+                loaderSwitchDuration: Duration(milliseconds: 150),
+              ),
+              documentLoaderBuilder: (_) => const Center(
+                child:
+                    CircularProgressIndicator(color: AppColors.primaryBlue),
+              ),
+              pageLoaderBuilder: (_) => const Center(
+                child:
+                    CircularProgressIndicator(color: AppColors.primaryBlue),
+              ),
+              errorBuilder: (context, error) => Center(
+                child: Text(
+                  'Error loading page: $error',
+                  style: const TextStyle(color: AppColors.textSecondary),
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -512,7 +644,10 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
                 constraints: const BoxConstraints(),
                 onPressed: _currentPage > 1
                     ? () {
-                        _pdfViewerController.previousPage();
+                        _pdfController?.previousPage(
+                          curve: Curves.easeInOut,
+                          duration: const Duration(milliseconds: 200),
+                        );
                       }
                     : null,
               ),
@@ -530,7 +665,10 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
                 constraints: const BoxConstraints(),
                 onPressed: _currentPage < _totalPages
                     ? () {
-                        _pdfViewerController.nextPage();
+                        _pdfController?.nextPage(
+                          curve: Curves.easeInOut,
+                          duration: const Duration(milliseconds: 200),
+                        );
                       }
                     : null,
               ),
