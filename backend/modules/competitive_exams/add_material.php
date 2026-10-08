@@ -54,15 +54,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 flash('error', 'Please upload a PDF file or provide an external PDF URL.');
             } else {
                 try {
+                    // Match existing competitive exam ID if available
+                    $examId = null;
+                    if (!empty($examName)) {
+                        $findExam = $db->prepare("SELECT id FROM competitive_exams WHERE LOWER(title) = LOWER(:name) OR LOWER(slug) = LOWER(:slug) OR LOWER(exam_code) = LOWER(:code) LIMIT 1");
+                        $findExam->execute([':name' => $examName, ':slug' => $examName, ':code' => $examName]);
+                        $matched = $findExam->fetch();
+                        if ($matched) {
+                            $examId = (int)$matched['id'];
+                        }
+                    }
+
                     $stmt = $db->prepare("
                         INSERT INTO competitive_exam_materials
-                        (title, exam_name, material_type, description, pdf_file_path, pdf_external_url, page_count, file_size_mb, display_order, status)
+                        (exam_id, exam_name, subject_name, title, material_type, description, pdf_file_path, pdf_external_url, page_count, file_size_mb, is_free, display_order, status)
                         VALUES
-                        (:title, :exam_name, :mat_type, :description, :pdf_file, :ext_url, :page_count, :file_size, :display_order, :status)
+                        (:exam_id, :exam_name, :sub_name, :title, :mat_type, :description, :pdf_file, :ext_url, :page_count, :file_size, true, :display_order, :status)
                     ");
                     $stmt->execute([
-                        ':title' => $title,
+                        ':exam_id' => $examId,
                         ':exam_name' => $examName,
+                        ':sub_name' => $examName ?: 'General',
+                        ':title' => $title,
                         ':mat_type' => $materialType,
                         ':description' => $description,
                         ':pdf_file' => $pdfFileName,

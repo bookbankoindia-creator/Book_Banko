@@ -75,10 +75,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 flash('error', 'Please upload a PDF file or provide an external PDF URL.');
             } else {
                 try {
+                    // Match existing competitive exam ID if available
+                    $examId = $material['exam_id'] ?? null;
+                    if (!empty($examName)) {
+                        $findExam = $db->prepare("SELECT id FROM competitive_exams WHERE LOWER(title) = LOWER(:name) OR LOWER(slug) = LOWER(:slug) OR LOWER(exam_code) = LOWER(:code) LIMIT 1");
+                        $findExam->execute([':name' => $examName, ':slug' => $examName, ':code' => $examName]);
+                        $matched = $findExam->fetch();
+                        if ($matched) {
+                            $examId = (int)$matched['id'];
+                        }
+                    }
+
                     $stmt = $db->prepare("
                         UPDATE competitive_exam_materials
                         SET title = :title,
+                            exam_id = :exam_id,
                             exam_name = :exam_name,
+                            subject_name = :sub_name,
                             material_type = :mat_type,
                             description = :description,
                             pdf_file_path = :pdf_file,
@@ -91,7 +104,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ");
                     $stmt->execute([
                         ':title' => $title,
+                        ':exam_id' => $examId,
                         ':exam_name' => $examName,
+                        ':sub_name' => $examName ?: 'General',
                         ':mat_type' => $materialType,
                         ':description' => $description,
                         ':pdf_file' => $pdfFileName,

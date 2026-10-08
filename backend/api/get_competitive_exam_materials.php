@@ -34,9 +34,10 @@ try {
         $whereClauses[] = "ce.slug = :exam_slug";
         $params[':exam_slug'] = $examSlug;
     } elseif (!empty($examName)) {
-        $whereClauses[] = "(ce.title LIKE :exam_name OR cem.subject_name LIKE :exam_name_sub)";
+        $whereClauses[] = "(ce.title LIKE :exam_name OR cem.subject_name LIKE :exam_name_sub OR cem.exam_name LIKE :exam_name_dir)";
         $params[':exam_name'] = '%' . $examName . '%';
         $params[':exam_name_sub'] = '%' . $examName . '%';
+        $params[':exam_name_dir'] = '%' . $examName . '%';
     }
 
     if (!empty($materialType)) {
@@ -45,10 +46,11 @@ try {
     }
 
     if (!empty($search)) {
-        $whereClauses[] = "(cem.title LIKE :search1 OR cem.description LIKE :search2 OR cem.subject_name LIKE :search3)";
+        $whereClauses[] = "(cem.title LIKE :search1 OR cem.description LIKE :search2 OR cem.subject_name LIKE :search3 OR cem.exam_name LIKE :search4)";
         $params[':search1'] = '%' . $search . '%';
         $params[':search2'] = '%' . $search . '%';
         $params[':search3'] = '%' . $search . '%';
+        $params[':search4'] = '%' . $search . '%';
     }
 
     $whereSql = implode(" AND ", $whereClauses);
