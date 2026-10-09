@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 
 enum StreamType {
@@ -255,6 +256,7 @@ class ChapterModel {
   final String pdfUrl;
   final int pageCount;
   final dynamic pageLinks;
+  final String? moduleSlug;
 
   const ChapterModel({
     this.id = 0,
@@ -263,6 +265,7 @@ class ChapterModel {
     required this.pdfUrl,
     this.pageCount = 34,
     this.pageLinks,
+    this.moduleSlug,
   });
 
   factory ChapterModel.fromJson(Map<String, dynamic> json) {
@@ -273,30 +276,55 @@ class ChapterModel {
       pdfUrl: json['full_pdf_url']?.toString() ?? json['pdf_file_path']?.toString() ?? '',
       pageCount: int.tryParse(json['page_count']?.toString() ?? '30') ?? 30,
       pageLinks: json['page_links'],
+      moduleSlug: json['module_slug']?.toString() ?? 'textbooks',
     );
   }
 
   String? getLinkForPage(int pageNumber) {
     if (pageLinks == null) return null;
+    final key = pageNumber.toString();
+
     if (pageLinks is Map) {
-      final key = pageNumber.toString();
-      if (pageLinks.containsKey(key) && pageLinks[key] != null && pageLinks[key].toString().trim().isNotEmpty) {
-        return pageLinks[key].toString().trim();
+      final map = pageLinks as Map;
+      if (map.containsKey(key) &&
+          map[key] != null &&
+          map[key].toString().trim().isNotEmpty) {
+        return map[key].toString().trim();
       }
-      if (pageLinks.containsKey('default') && pageLinks['default'] != null && pageLinks['default'].toString().trim().isNotEmpty) {
-        return pageLinks['default'].toString().trim();
+      if (map.containsKey(pageNumber) &&
+          map[pageNumber] != null &&
+          map[pageNumber].toString().trim().isNotEmpty) {
+        return map[pageNumber].toString().trim();
       }
     } else if (pageLinks is String && pageLinks.toString().trim().isNotEmpty) {
       final str = pageLinks.toString().trim();
       if (str.startsWith('{') && str.endsWith('}')) {
-        // Try parsing JSON map
+        try {
+          final decoded = jsonDecode(str);
+          if (decoded is Map) {
+            if (decoded.containsKey(key) &&
+                decoded[key] != null &&
+                decoded[key].toString().trim().isNotEmpty) {
+              return decoded[key].toString().trim();
+            }
+            if (decoded.containsKey(pageNumber) &&
+                decoded[pageNumber] != null &&
+                decoded[pageNumber].toString().trim().isNotEmpty) {
+              return decoded[pageNumber].toString().trim();
+            }
+          }
+        } catch (_) {}
+
         final keyPattern = '"$pageNumber"\\s*:\\s*"([^"]+)"';
         final match = RegExp(keyPattern).firstMatch(str);
         if (match != null && match.group(1) != null) {
           return match.group(1);
         }
       } else if (str.startsWith('http://') || str.startsWith('https://')) {
-        return str;
+        // If single URL is provided without page keys, only show on page 1
+        if (pageNumber == 1) {
+          return str;
+        }
       }
     }
     return null;
@@ -410,6 +438,7 @@ class ExtraMaterialModel {
       title: title,
       pdfUrl: pdfUrl,
       pageCount: pageCount,
+      moduleSlug: 'extra_material',
     );
   }
 }
@@ -598,6 +627,7 @@ class CompetitiveExamMaterialModel {
       title: title,
       pdfUrl: pdfUrl,
       pageCount: pageCount,
+      moduleSlug: 'competitive_exams',
     );
   }
 }
@@ -648,6 +678,7 @@ class HigherEducationMaterialModel {
       title: title,
       pdfUrl: pdfUrl,
       pageCount: pageCount,
+      moduleSlug: 'higher_education',
     );
   }
 }

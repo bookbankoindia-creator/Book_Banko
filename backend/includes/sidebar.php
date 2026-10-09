@@ -53,27 +53,44 @@ function isActiveNav(string $keyword): string {
             <span>Streams (11th & 12th)</span>
         </a>
 
-        <div class="sidebar-heading">Content & Library</div>
-
-        <a href="<?= url('modules/categories/index.php') ?>" class="nav-link-bb <?= isActiveNav('/categories/') ?>">
-            <i class="bi bi-tags-fill"></i>
-            <span>Learning Categories</span>
-        </a>
-
-        <a href="<?= url('modules/modules/index.php') ?>" class="nav-link-bb <?= isActiveNav('/modules/') && !isActiveNav('categories') && !isActiveNav('boards') && !isActiveNav('standards') && !isActiveNav('streams') && !isActiveNav('subjects') && !isActiveNav('chapters') && !isActiveNav('banners') && !isActiveNav('settings') && !isActiveNav('dashboard') ? 'active' : '' ?>">
-            <i class="bi bi-collection-fill"></i>
-            <span>Dashboard Modules</span>
-        </a>
-
         <a href="<?= url('modules/subjects/index.php') ?>" class="nav-link-bb <?= isActiveNav('/subjects/') ?>">
             <i class="bi bi-journal-bookmark-fill"></i>
             <span>Subjects</span>
         </a>
 
+        <div class="sidebar-heading">Standard Study Modules (PDFs)</div>
+
+        <a href="<?= url('modules/textbooks/index.php') ?>" class="nav-link-bb <?= isActiveNav('/textbooks/') ?>">
+            <i class="bi bi-book-half text-primary"></i>
+            <span>Textbooks</span>
+        </a>
+
+        <a href="<?= url('modules/pyqs/index.php') ?>" class="nav-link-bb <?= isActiveNav('/pyqs/') ?>">
+            <i class="bi bi-journal-text text-info"></i>
+            <span>Old PYQs</span>
+        </a>
+
+        <a href="<?= url('modules/paper_sets/index.php') ?>" class="nav-link-bb <?= isActiveNav('/paper_sets/') ?>">
+            <i class="bi bi-clipboard-check-fill text-primary"></i>
+            <span>Paper Sets</span>
+        </a>
+
+        <a href="<?= url('modules/blueprints/index.php') ?>" class="nav-link-bb <?= isActiveNav('/blueprints/') ?>">
+            <i class="bi bi-compass-fill text-primary"></i>
+            <span>Blueprint</span>
+        </a>
+
+        <a href="<?= url('modules/mimp/index.php') ?>" class="nav-link-bb <?= isActiveNav('/mimp/') ?>">
+            <i class="bi bi-star-fill text-warning"></i>
+            <span>M.IMP Questions</span>
+        </a>
+
         <a href="<?= url('modules/chapters/index.php') ?>" class="nav-link-bb <?= isActiveNav('/chapters/') ?>">
             <i class="bi bi-file-earmark-pdf-fill"></i>
-            <span>Chapters & PDFs</span>
+            <span>All Chapters & Master PDFs</span>
         </a>
+
+        <div class="sidebar-heading">Home Categories & Store</div>
 
         <a href="<?= url('modules/extra_materials/index.php') ?>" class="nav-link-bb <?= isActiveNav('/extra_materials/') ?>">
             <i class="bi bi-bookmark-star-fill text-warning"></i>

@@ -31,8 +31,12 @@ try {
         $whereClauses[] = "c.module_id = :module_id";
         $params[':module_id'] = $moduleId;
     } elseif ($moduleSlug) {
-        $whereClauses[] = "m.slug = :module_slug";
-        $params[':module_slug'] = $moduleSlug;
+        if ($moduleSlug === 'textbooks' || $moduleSlug === 'textbook') {
+            $whereClauses[] = "(m.slug = 'textbooks' OR m.slug = 'textbook' OR c.module_id = 1 OR c.module_id IS NULL)";
+        } else {
+            $whereClauses[] = "m.slug = :module_slug";
+            $params[':module_slug'] = $moduleSlug;
+        }
     }
 
     $whereSql = implode(" AND ", $whereClauses);
@@ -53,24 +57,6 @@ try {
     $stmt = $db->prepare($query);
     $stmt->execute($params);
     $chapters = $stmt->fetchAll();
-
-    // Fallback: If no chapters found for this specific module slug, fetch all active chapters for the subject
-    if (empty($chapters) && ($moduleId || $moduleSlug)) {
-        $fbStmt = $db->prepare("
-            SELECT c.id, c.chapter_number, c.title, c.description,
-                   c.pdf_file_path, c.pdf_external_url, c.page_count, c.file_size_mb,
-                   c.is_free, c.views_count, c.display_order, c.page_links,
-                   m.id as module_id, m.title as module_title, m.slug as module_slug,
-                   s.name as subject_name, s.code as subject_code
-            FROM chapters_content c
-            JOIN subjects s ON c.subject_id = s.id
-            LEFT JOIN dashboard_modules m ON c.module_id = m.id
-            WHERE c.subject_id = :subject_id AND c.status = 'active'
-            ORDER BY c.display_order ASC, c.chapter_number ASC
-        ");
-        $fbStmt->execute([':subject_id' => $subjectId]);
-        $chapters = $fbStmt->fetchAll();
-    }
 
     // Attach full PDF URL
     foreach ($chapters as &$chap) {

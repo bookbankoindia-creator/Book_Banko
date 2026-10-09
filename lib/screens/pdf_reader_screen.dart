@@ -42,7 +42,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
 
     if (_currentLoadedUrl != chapter.pdfUrl) {
       _currentLoadedUrl = chapter.pdfUrl;
-      _loadPdf(chapter.pdfUrl, chapter);
+      _loadPdf(chapter.pdfUrl, chapter, appState);
     }
   }
 
@@ -183,7 +183,113 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
     return rawUrl;
   }
 
-  Future<void> _loadPdf(String url, [ChapterModel? chapter]) async {
+  Future<Uint8List> _flattenAndEnhancePdf(
+    Uint8List rawBytes,
+    ChapterModel chapter, [
+    BookBankoAppState? appState,
+  ]) async {
+    try {
+      final document = sf_pdf.PdfDocument(inputBytes: rawBytes);
+      const defaultUrl =
+          'https://docs.google.com/document/d/1KpHDVKmK_OJhktZPq0wOphWFlPFUJE2jIIJCiC_Fz30/edit?tab=t.0';
+
+      // Only enable JEE & NEET question links for the "Textbooks" section
+      final isTextbookSection = (chapter.moduleSlug == null ||
+              chapter.moduleSlug == 'textbooks' ||
+              chapter.moduleSlug == 'textbook') &&
+          (appState?.selectedModuleSlug == 'textbooks' ||
+              appState?.selectedModuleSlug == 'textbook' ||
+              appState?.selectedModuleSlug == null ||
+              appState?.selectedModuleSlug.isEmpty == true);
+
+      for (int i = 0; i < document.pages.count; i++) {
+        final page = document.pages[i];
+        final pageNumber = i + 1;
+
+        // 1. Add diagonal "Book Banko" watermark across center (on all pages for ALL PDF sections)
+        try {
+          final wmFont = sf_pdf.PdfStandardFont(
+            sf_pdf.PdfFontFamily.helvetica,
+            36,
+            style: sf_pdf.PdfFontStyle.bold,
+          );
+          const wmText = 'Book Banko';
+          final wmSize = wmFont.measureString(wmText);
+
+          final gState = page.graphics.save();
+          page.graphics.setTransparency(0.12);
+          page.graphics.translateTransform(
+            page.size.width / 2,
+            page.size.height / 2,
+          );
+          page.graphics.rotateTransform(-32);
+          page.graphics.drawString(
+            wmText,
+            wmFont,
+            brush: sf_pdf.PdfSolidBrush(sf_pdf.PdfColor(0, 97, 164)),
+            bounds: Rect.fromLTWH(
+              -wmSize.width / 2,
+              -wmSize.height / 2,
+              wmSize.width,
+              wmSize.height,
+            ),
+          );
+          page.graphics.restore(gState);
+        } catch (_) {}
+
+        // 2. JEE & NEET Question Link: ONLY show in Textbooks section from Page 4 onwards (4, 5, 6... last page)
+        // (Do NOT show on Pages 1 to 3, and do NOT show on any other PDF section like solutions, extra materials, competitive exams, etc.)
+        if (isTextbookSection && pageNumber >= 4) {
+          final configuredUrl = chapter.getLinkForPage(pageNumber);
+          final targetPageUrl = configuredUrl ?? defaultUrl;
+
+          if (targetPageUrl.trim().isNotEmpty) {
+            try {
+              final font = sf_pdf.PdfStandardFont(
+                sf_pdf.PdfFontFamily.helvetica,
+                12,
+                style: sf_pdf.PdfFontStyle.regular,
+              );
+              const linkText = 'Click here for the best JEE & NEET Questions.';
+              final textSize = font.measureString(linkText);
+              final linkRect = Rect.fromLTWH(
+                (page.size.width - textSize.width) / 2,
+                page.size.height - 30,
+                textSize.width,
+                20,
+              );
+
+              // Draw the blue text directly onto the PDF canvas
+              page.graphics.drawString(
+                linkText,
+                font,
+                brush: sf_pdf.PdfSolidBrush(
+                  sf_pdf.PdfColor(29, 78, 216),
+                ), // #1D4ED8 blue
+                bounds: linkRect,
+              );
+
+              // Add interactive URI Annotation for this page
+              final uriAnnotation = sf_pdf.PdfUriAnnotation(
+                bounds: linkRect,
+                uri: targetPageUrl.trim(),
+              );
+              page.annotations.add(uriAnnotation);
+            } catch (_) {}
+          }
+        }
+      }
+
+      final output = await document.save();
+      document.dispose();
+      return Uint8List.fromList(output);
+    } catch (e) {
+      debugPrint('PDF enhancement warning: $e');
+      return rawBytes;
+    }
+  }
+
+  Future<void> _loadPdf(String url, [ChapterModel? chapter, BookBankoAppState? appState]) async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -248,10 +354,17 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
         );
       }
 
+      final activeChapter = chapter ?? ChapterModel.mathChapters[0];
+      final processedBytes = await _flattenAndEnhancePdf(
+        downloadedBytes,
+        activeChapter,
+        appState,
+      );
+
       if (!mounted) return;
 
       setState(() {
-        _pdfBytes = downloadedBytes;
+        _pdfBytes = processedBytes;
         _currentPage = 1;
         _isLoading = false;
       });
@@ -329,7 +442,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
               color: AppColors.canvasBg,
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
               alignment: Alignment.center,
-              child: _buildPdfView(chapter),
+              child: _buildPdfView(chapter, appState),
             ),
           ),
 
@@ -340,7 +453,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
     );
   }
 
-  Widget _buildPdfView(ChapterModel chapter) {
+  Widget _buildPdfView(ChapterModel chapter, BookBankoAppState appState) {
     if (_isLoading) {
       return const Center(
         child: Column(
@@ -395,7 +508,7 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
-                onPressed: () => _loadPdf(_currentLoadedUrl, chapter),
+                onPressed: () => _loadPdf(_currentLoadedUrl, chapter, appState),
                 icon: const Icon(Icons.refresh),
                 label: const Text('Try Again'),
                 style: ElevatedButton.styleFrom(
@@ -446,9 +559,16 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
             final uri = Uri.tryParse(details.uri);
             if (uri != null) {
               try {
-                await launchUrl(uri, mode: LaunchMode.externalApplication);
+                if (await canLaunchUrl(uri)) {
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                } else {
+                  await launchUrl(uri, mode: LaunchMode.platformDefault);
+                }
               } catch (e) {
                 debugPrint('Hyperlink launch error: $e');
+                try {
+                  await launchUrl(uri, mode: LaunchMode.platformDefault);
+                } catch (_) {}
               }
             }
           },

@@ -196,11 +196,57 @@ include __DIR__ . '/../../includes/header.php';
                     </div>
 
                     <div class="col-12">
-                        <label class="form-label" for="page_links">
-                            <i class="bi bi-link-45deg text-primary me-1"></i>Page-Specific JEE & NEET Question Links (Google Docs / Quizzes)
-                        </label>
-                        <textarea class="form-control font-monospace small" id="page_links" name="page_links" rows="3" placeholder='{"1": "https://docs.google.com/document/d/1KpHDVKmK_OJhktZPq0wOphWFlPFUJE2jIIJCiC_Fz30/edit?tab=t.0", "2": "https://...", "default": "https://..."}'><?= htmlspecialchars($_POST['page_links'] ?? '') ?></textarea>
-                        <div class="form-text">Enter JSON mapping of page numbers to question links (e.g. <code>{"1": "https://docs.google.com/...", "2": "https://..."}</code>) or a default Google Doc link.</div>
+                        <div class="card border rounded-3 p-3 bg-light">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                                <div>
+                                    <h6 class="fw-bold mb-0 text-primary">
+                                        <i class="bi bi-link-45deg me-1"></i>Page-Wise JEE & NEET Question Links
+                                    </h6>
+                                    <small class="text-muted">Set specific question doc/quiz URLs for Page 4 and all pages after (4, 5, 6, 7...).</small>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addPageRow()">
+                                        <i class="bi bi-plus-circle me-1"></i>Add Page Link
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="quickFillPage4Onwards()">
+                                        <i class="bi bi-magic me-1"></i>Quick Fill Page 4+
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Global/Default Link (Optional fallback) -->
+                            <div class="row g-2 mb-3 align-items-center bg-white p-2 rounded border">
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold mb-0 text-dark">Default Link for Page 4 Onwards:</label>
+                                    <small class="text-muted d-block" style="font-size: 11px;">Fallback if a page does not have a custom link</small>
+                                </div>
+                                <div class="col-md-8">
+                                    <input type="url" class="form-control form-control-sm" id="default_page_link" placeholder="https://docs.google.com/document/d/..." oninput="syncPageLinksJson()">
+                                </div>
+                            </div>
+
+                            <!-- Table of Custom Page Links -->
+                            <div class="table-responsive bg-white rounded border">
+                                <table class="table table-sm table-hover mb-0 align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 140px;">Page Number</th>
+                                            <th>JEE & NEET Question URL / Google Doc</th>
+                                            <th style="width: 60px;" class="text-center">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="page_links_rows">
+                                        <!-- Dynamic Rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div id="no_custom_links_msg" class="text-center py-2 text-muted small">
+                                No specific page links added yet. Click <strong>+ Add Page Link</strong> or <strong>Quick Fill Page 4+</strong>.
+                            </div>
+
+                            <!-- Hidden field that stores the JSON string for backend processing -->
+                            <input type="hidden" id="page_links" name="page_links" value="<?= htmlspecialchars($_POST['page_links'] ?? '') ?>">
+                        </div>
                     </div>
 
                     <div class="col-12 mt-4 text-end">
@@ -224,6 +270,107 @@ function handleFileSelected(input) {
             `<strong class="text-primary"><i class="bi bi-check2-circle me-1"></i>Selected: ${file.name} (${sizeMB} MB)</strong>`;
     }
 }
+
+// Page Links Manager Script
+function addPageRow(pageNum = '', url = '') {
+    const tbody = document.getElementById('page_links_rows');
+    const msg = document.getElementById('no_custom_links_msg');
+    msg.style.display = 'none';
+
+    const tr = document.createElement('tr');
+    tr.className = 'page-link-row';
+    tr.innerHTML = `
+        <td>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-light text-muted">Pg</span>
+                <input type="number" min="1" class="form-control form-control-sm row-page-num fw-bold text-primary" value="${pageNum}" placeholder="e.g. 4" oninput="syncPageLinksJson()">
+            </div>
+        </td>
+        <td>
+            <input type="url" class="form-control form-control-sm row-page-url font-monospace small" value="${url}" placeholder="https://docs.google.com/document/d/..." oninput="syncPageLinksJson()">
+        </td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-outline-danger border-0 p-1" onclick="removePageRow(this)" title="Delete Row">
+                <i class="bi bi-trash3"></i>
+            </button>
+        </td>
+    `;
+    tbody.appendChild(tr);
+    syncPageLinksJson();
+}
+
+function removePageRow(btn) {
+    btn.closest('tr').remove();
+    const rows = document.querySelectorAll('.page-link-row');
+    if (rows.length === 0) {
+        document.getElementById('no_custom_links_msg').style.display = 'block';
+    }
+    syncPageLinksJson();
+}
+
+function quickFillPage4Onwards() {
+    const totalPagesInput = document.getElementById('page_count');
+    const totalPages = parseInt(totalPagesInput?.value || '10', 10);
+    const defaultUrl = document.getElementById('default_page_link').value.trim();
+
+    // Add rows from 4 to totalPages or 4..10
+    const endPage = Math.min(Math.max(totalPages, 4), 30);
+    for (let p = 4; p <= endPage; p++) {
+        // check if row for page p already exists
+        const existing = Array.from(document.querySelectorAll('.row-page-num')).some(input => input.value == p);
+        if (!existing) {
+            addPageRow(p, defaultUrl);
+        }
+    }
+}
+
+function syncPageLinksJson() {
+    const defaultUrl = document.getElementById('default_page_link').value.trim();
+    const rows = document.querySelectorAll('.page-link-row');
+    const mapping = {};
+
+    if (defaultUrl) {
+        mapping['default'] = defaultUrl;
+    }
+
+    rows.forEach(tr => {
+        const pageNum = tr.querySelector('.row-page-num').value.trim();
+        const url = tr.querySelector('.row-page-url').value.trim();
+        if (pageNum && url) {
+            mapping[pageNum] = url;
+        }
+    });
+
+    const hiddenInput = document.getElementById('page_links');
+    if (Object.keys(mapping).length > 0) {
+        hiddenInput.value = JSON.stringify(mapping);
+    } else {
+        hiddenInput.value = '';
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+    const initialVal = document.getElementById('page_links').value.trim();
+    if (initialVal) {
+        try {
+            if (initialVal.startsWith('{') && initialVal.endsWith('}')) {
+                const parsed = JSON.parse(initialVal);
+                for (const [key, val] of Object.entries(parsed)) {
+                    if (key === 'default') {
+                        document.getElementById('default_page_link').value = val;
+                    } else if (key && val) {
+                        addPageRow(key, val);
+                    }
+                }
+            } else if (initialVal.startsWith('http://') || initialVal.startsWith('https://')) {
+                document.getElementById('default_page_link').value = initialVal;
+            }
+        } catch (e) {
+            console.error('Error parsing initial page_links:', e);
+        }
+    }
+});
 </script>
 
 <?php include __DIR__ . '/../../includes/footer.php'; ?>
