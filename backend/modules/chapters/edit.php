@@ -237,6 +237,17 @@ include __DIR__ . '/../../includes/header.php';
                                 </div>
                             </div>
 
+                            <!-- Container Link Text (Customizable text displayed on container) -->
+                            <div class="row g-2 mb-2 align-items-center bg-white p-2 rounded border">
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold mb-0 text-dark">Container Display Text:</label>
+                                    <small class="text-muted d-block" style="font-size: 11px;">Custom text on the clickable container (Page 4+)</small>
+                                </div>
+                                <div class="col-md-8">
+                                    <input type="text" class="form-control form-control-sm" id="custom_link_text" placeholder="👉 Click here for the best JEE & NEET Questions ↗" oninput="syncPageLinksJson()">
+                                </div>
+                            </div>
+
                             <!-- Global/Default Link (Optional fallback) -->
                             <div class="row g-2 mb-3 align-items-center bg-white p-2 rounded border">
                                 <div class="col-md-4">
@@ -348,8 +359,13 @@ function quickFillPage4Onwards() {
 
 function syncPageLinksJson() {
     const defaultUrl = document.getElementById('default_page_link').value.trim();
+    const customText = document.getElementById('custom_link_text').value.trim();
     const rows = document.querySelectorAll('.page-link-row');
     const mapping = {};
+
+    if (customText) {
+        mapping['link_text'] = customText;
+    }
 
     if (defaultUrl) {
         mapping['default'] = defaultUrl;
@@ -379,7 +395,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (initialVal.startsWith('{') && initialVal.endsWith('}')) {
                 const parsed = JSON.parse(initialVal);
                 for (const [key, val] of Object.entries(parsed)) {
-                    if (key === 'default') {
+                    if (key === 'link_text' || key === 'button_text') {
+                        document.getElementById('custom_link_text').value = val;
+                    } else if (key === 'default') {
                         document.getElementById('default_page_link').value = val;
                     } else if (key && val) {
                         addPageRow(key, val);

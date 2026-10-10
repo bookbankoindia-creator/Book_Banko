@@ -330,6 +330,44 @@ class ChapterModel {
     return null;
   }
 
+  /// Returns custom container text customized from Admin Panel, or fallback default
+  String getCustomLinkText([String? fallbackText]) {
+    final defaultText = fallbackText ?? '👉 Click here for the best JEE & NEET Questions ↗';
+    if (pageLinks == null) return defaultText;
+
+    if (pageLinks is Map) {
+      final map = pageLinks as Map;
+      if (map['link_text'] != null && map['link_text'].toString().trim().isNotEmpty) {
+        return map['link_text'].toString().trim();
+      }
+      if (map['button_text'] != null && map['button_text'].toString().trim().isNotEmpty) {
+        return map['button_text'].toString().trim();
+      }
+    } else if (pageLinks is String && pageLinks.toString().trim().isNotEmpty) {
+      final str = pageLinks.toString().trim();
+      if (str.startsWith('{') && str.endsWith('}')) {
+        try {
+          final decoded = jsonDecode(str);
+          if (decoded is Map) {
+            if (decoded['link_text'] != null && decoded['link_text'].toString().trim().isNotEmpty) {
+              return decoded['link_text'].toString().trim();
+            }
+            if (decoded['button_text'] != null && decoded['button_text'].toString().trim().isNotEmpty) {
+              return decoded['button_text'].toString().trim();
+            }
+          }
+        } catch (_) {}
+
+        final textPattern = '"(?:link_text|button_text)"\\s*:\\s*"([^"]+)"';
+        final match = RegExp(textPattern).firstMatch(str);
+        if (match != null && match.group(1) != null) {
+          return match.group(1)!;
+        }
+      }
+    }
+    return defaultText;
+  }
+
   static const List<ChapterModel> mathChapters = [
     ChapterModel(number: 1, title: 'Number Systems', pdfUrl: 'ch1_number_systems.pdf', pageCount: 42),
     ChapterModel(number: 2, title: 'Polynomials', pdfUrl: 'ch2_polynomials.pdf', pageCount: 38),

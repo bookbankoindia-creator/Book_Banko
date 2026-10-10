@@ -28,7 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'privacy_policy_url' => trim($_POST['privacy_policy_url'] ?? ''),
             'terms_conditions_url' => trim($_POST['terms_conditions_url'] ?? ''),
             'notice_title' => trim($_POST['notice_title'] ?? ''),
-            'notice_message' => trim($_POST['notice_message'] ?? '')
+            'notice_message' => trim($_POST['notice_message'] ?? ''),
+            'default_jee_neet_text' => trim($_POST['default_jee_neet_text'] ?? '👉 Click here for the best JEE & NEET Questions ↗')
         ];
 
         try {
@@ -133,6 +134,20 @@ include __DIR__ . '/../../includes/header.php';
                     <div class="col-md-12">
                         <label class="form-label" for="notice_message">Notice Message Body</label>
                         <textarea class="form-control" id="notice_message" name="notice_message" rows="2" placeholder="Announce new study materials, updates, or board news"><?= htmlspecialchars($current['notice_message'] ?? '') ?></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Textbook & PDF Reader Container Settings -->
+            <div class="bb-card mb-4">
+                <div class="bb-card-header">
+                    <h5><i class="bi bi-file-earmark-pdf-fill text-danger me-2"></i>Textbook & PDF Reader Options</h5>
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <label class="form-label" for="default_jee_neet_text">Default Container Text (Page 4+ in Textbooks)</label>
+                        <input type="text" class="form-control" id="default_jee_neet_text" name="default_jee_neet_text" value="<?= htmlspecialchars($current['default_jee_neet_text'] ?? '👉 Click here for the best JEE & NEET Questions ↗') ?>" placeholder="👉 Click here for the best JEE & NEET Questions ↗">
+                        <small class="text-muted">Global default text shown on the clickable bottom container for textbook PDFs from Page 4 onwards. Can also be overridden per individual chapter in the Chapter Editor.</small>
                     </div>
                 </div>
             </div>

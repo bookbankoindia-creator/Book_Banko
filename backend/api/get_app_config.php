@@ -45,6 +45,7 @@ try {
             'title' => $settings['notice_title'] ?? '',
             'message' => $settings['notice_message'] ?? ''
         ],
+        'default_jee_neet_text' => $settings['default_jee_neet_text'] ?? '👉 Click here for the best JEE & NEET Questions ↗',
         'banners' => $banners
     ];
 

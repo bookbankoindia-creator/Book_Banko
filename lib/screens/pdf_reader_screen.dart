@@ -245,33 +245,71 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
 
           if (targetPageUrl.trim().isNotEmpty) {
             try {
-              final font = sf_pdf.PdfStandardFont(
-                sf_pdf.PdfFontFamily.helvetica,
-                12,
-                style: sf_pdf.PdfFontStyle.regular,
-              );
-              const linkText = 'Click here for the best JEE & NEET Questions.';
-              final textSize = font.measureString(linkText);
-              final linkRect = Rect.fromLTWH(
-                (page.size.width - textSize.width) / 2,
-                page.size.height - 30,
-                textSize.width,
-                20,
+              // Full container dimensions at the bottom of the textbook page
+              const containerMargin = 16.0;
+              const containerHeight = 36.0;
+              final containerWidth = page.size.width - (containerMargin * 2);
+              final containerY = page.size.height - 46.0;
+              final containerRect = Rect.fromLTWH(
+                containerMargin,
+                containerY,
+                containerWidth,
+                containerHeight,
               );
 
-              // Draw the blue text directly onto the PDF canvas
+              // 1. Draw modern, stylish container background (soft light blue fill)
+              page.graphics.drawRectangle(
+                brush: sf_pdf.PdfSolidBrush(
+                  sf_pdf.PdfColor(239, 246, 255), // #EFF6FF soft blue background
+                ),
+                bounds: containerRect,
+              );
+
+              // 2. Draw crisp container border (#2563EB blue)
+              page.graphics.drawRectangle(
+                pen: sf_pdf.PdfPen(
+                  sf_pdf.PdfColor(37, 99, 235), // #2563EB border
+                  width: 1.2,
+                ),
+                bounds: containerRect,
+              );
+
+              // 3. Draw centered text inside the full container (customized from Admin Panel)
+              final linkText = chapter.getCustomLinkText();
+              final fontSize = linkText.length > 50
+                  ? 9.5
+                  : (linkText.length > 38 ? 10.5 : 11.5);
+              final font = sf_pdf.PdfStandardFont(
+                sf_pdf.PdfFontFamily.helvetica,
+                fontSize,
+                style: sf_pdf.PdfFontStyle.bold,
+              );
+              final format = sf_pdf.PdfStringFormat(
+                alignment: sf_pdf.PdfTextAlignment.center,
+                lineAlignment: sf_pdf.PdfVerticalAlignment.middle,
+              );
+
               page.graphics.drawString(
                 linkText,
                 font,
                 brush: sf_pdf.PdfSolidBrush(
-                  sf_pdf.PdfColor(29, 78, 216),
-                ), // #1D4ED8 blue
-                bounds: linkRect,
+                  sf_pdf.PdfColor(29, 78, 216), // #1D4ED8 blue
+                ),
+                bounds: containerRect,
+                format: format,
               );
 
-              // Add interactive URI Annotation for this page
+              // 4. FULL CONTAINER CLICKABLE ANNOTATION:
+              // Set the clickable URI annotation to cover the full container and entire footer band
+              // so clicking anywhere in the container triggers and opens the link!
+              final fullClickableRect = Rect.fromLTWH(
+                0,
+                containerY - 4,
+                page.size.width,
+                containerHeight + 8,
+              );
               final uriAnnotation = sf_pdf.PdfUriAnnotation(
-                bounds: linkRect,
+                bounds: fullClickableRect,
                 uri: targetPageUrl.trim(),
               );
               page.annotations.add(uriAnnotation);
@@ -556,12 +594,15 @@ class _PdfReaderScreenState extends State<PdfReaderScreen> {
             });
           },
           onHyperlinkClicked: (PdfHyperlinkClickedDetails details) async {
-            final uri = Uri.tryParse(details.uri);
+            final rawUri = details.uri.trim();
+            final uri = Uri.tryParse(rawUri);
             if (uri != null) {
               try {
-                if (await canLaunchUrl(uri)) {
-                  await launchUrl(uri, mode: LaunchMode.externalApplication);
-                } else {
+                final launched = await launchUrl(
+                  uri,
+                  mode: LaunchMode.externalApplication,
+                );
+                if (!launched) {
                   await launchUrl(uri, mode: LaunchMode.platformDefault);
                 }
               } catch (e) {
